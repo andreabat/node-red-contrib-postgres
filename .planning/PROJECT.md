@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A Node-RED contrib node providing production-grade PostgreSQL integration. Three node types: a config node managing `pg.Pool` connections, a query node executing SQL with Mustache templating, and a listener node for real-time `LISTEN/NOTIFY` push. Currently functional but unmaintained — zero tests, dead CI, accumulated tech debt, and missing critical production features (transactions, streaming, auto-reconnect).
+A production-grade Node-RED contrib node for PostgreSQL providing three node types: PostgresDBNode (configurable pg.Pool connections with SSL, health monitoring, DATABASE_URL), PostgresNode (SQL queries with Mustache templating, named parameters, structured errors, transactions, cursor streaming, COPY, retry), and PostgresListenerNode (real-time LISTEN/NOTIFY with auto-reconnect and JSON parsing). Fully migrated to TypeScript with 137 tests and zero regressions.
 
 ## Core Value
 
@@ -12,91 +12,77 @@ Reliable, production-ready PostgreSQL access from Node-RED flows — with transa
 
 ### Validated
 
-- ✓ PostgreSQL connection pooling via `pg.Pool` — existing
-- ✓ SQL query execution with Mustache template rendering — existing
-- ✓ LISTEN/NOTIFY real-time push messaging — existing
-- ✓ Per-node parameterized queries via `msg.params` — existing
-- ✓ Configurable pool settings (max, min, idleTimeout, connectionTimeout) — existing
-- ✓ SSL connection support (boolean toggle) — existing
-- ✓ Node-RED credential storage for username/password — existing
-- ✓ Typed input fields (str, num, bool, flow, global, env) — existing
-- ✓ i18n support (en-US) — existing
-- ✓ Error handling with throwErrors toggle — existing
+- ✓ PostgreSQL connection pooling via `pg.Pool` — v1.0
+- ✓ SQL query execution with Mustache template rendering — v1.0
+- ✓ LISTEN/NOTIFY real-time push messaging — v1.0
+- ✓ Per-node parameterized queries via `msg.params` — v1.0
+- ✓ Configurable pool settings (max, min, idleTimeout, connectionTimeout) — v1.0
+- ✓ SSL connection support (sslmode dropdown, CA cert, client cert/key) — v1.0
+- ✓ Node-RED credential storage for username/password — v1.0
+- ✓ Typed input fields (str, num, bool, flow, global, env) — v1.0
+- ✓ i18n support (en-US) — v1.0
+- ✓ Error handling with throwErrors toggle — v1.0
+- ✓ TypeScript migration (strict:true, ES2022, CommonJS) — v1.0
+- ✓ ESLint 9.x flat config — v1.0
+- ✓ Jest + ts-jest test framework (137 tests) — v1.0
+- ✓ 6 bugs fixed (BUG-01 through BUG-06) — v1.0
+- ✓ Pool health badge (active/idle/waiting/total) — v1.0
+- ✓ DATABASE_URL connection support — v1.0
+- ✓ Named parameter binding (Object.keys insertion order) — v1.0
+- ✓ Structured error objects (code, detail, constraint, table, etc.) — v1.0
+- ✓ Per-node SET statement_timeout with finally-block reset — v1.0
+- ✓ SQL editor with ACE syntax highlighting and autocomplete — v1.0
+- ✓ Type mapping: NUMERIC→number, TIMESTAMPTZ→ISO, JSONB→object — v1.0
+- ✓ Transparent MD5-hashed prepared statement auto-naming — v1.0
+- ✓ Multi-step transactions (BEGIN/COMMIT/ROLLBACK) — v1.0
+- ✓ Listener auto-reconnect with jittered exponential backoff — v1.0
+- ✓ Channel sanitization via pg-format %I — v1.0
+- ✓ NOTIFY JSON auto-parse with raw string fallback — v1.0
+- ✓ Cursor streaming via DECLARE/FETCH — v1.0
+- ✓ COPY CSV import/export via pg-copy-streams + pipeline() — v1.0
+- ✓ Retry on transient errors (40P01, 40001, connection resets) with jittered backoff — v1.0
 
 ### Active
 
-**Core Modernization:**
-- [ ] TypeScript migration from JavaScript
-- [ ] ESLint 9.x flat config (upgrade from 6.8.0)
-- [ ] Jest test framework with meaningful test coverage
-- [ ] Remove dead `azure-pipelines.yml`
-
-**Bug Fixes & Cleanup:**
-- [ ] Remove dead `myPool` module-level variable
-- [ ] Fix listener connection leak (add close handler with client release)
-- [ ] Replace `console.log` calls with `node.log()` / `node.warn()`
-- [ ] Remove or wire the dead `output` config checkbox in PostgresNode HTML
-- [ ] Clean up commented-out code in `postgrestor.html` templates
-- [ ] Fix locale placeholder swap (min/max)
-
-**Connection & Pooling:**
-- [ ] Configurable pool exposed in UI: max connections, idle/connection timeout, statement_timeout
-- [ ] Health-check/status node showing pool state (active/idle/waiting) in runtime status
-- [ ] SSL/TLS fully configurable: sslmode, CA cert, client cert (for RDS/Azure/Supabase managed DBs)
-- [ ] Connection from `DATABASE_URL` or env vars, in addition to individual fields
-
-**Query & Data:**
-- [ ] Multi-step transactions — transaction node or array-of-queries on same connection (BEGIN/COMMIT/ROLLBACK)
-- [ ] Named parameters beyond positional `$1` — map `msg.params` object `{name: value}` and bind
-- [ ] Streaming/cursor mode for large result sets (`pg-cursor`/`pg-query-stream`), emitting row batches
-- [ ] COPY support (`pg-copy-streams`) for high-performance CSV import/export
-- [ ] Automatic type mapping: `numeric` → number, `jsonb` optional parse, `timestamptz` → ISO, with toggle
-
-**Reliability:**
-- [ ] Retry with exponential backoff on transient errors (connection reset, deadlock 40P01, serialization failure 40001)
-- [ ] Per-node query timeout with clean cancellation
-- [ ] Reusable prepared statements for high-frequency repeated queries
-
-**LISTEN/NOTIFY:**
-- [ ] Auto-reconnect on listener connection drop
-- [ ] Channel name sanitization to close SQL injection vulnerability (mentioned in README)
-- [ ] Auto-parse NOTIFY payload as JSON when possible
-
-**DX / Quality:**
-- [ ] SQL editor with syntax highlighting (CodeMirror SQL mode, already in Node-RED)
-- [ ] Structured `msg.error` with `code`, `detail`, `constraint`, `table` fields instead of plain string
+*(No active requirements — v1.0 shipped. Run /gsd-new-milestone to define next milestone.)*
 
 ### Out of Scope
 
-- GitHub Actions CI — deferred; remove Azure pipeline for now, add CI later
+- GitHub Actions CI — deferred; add later
 - New database backends (only PostgreSQL)
 
 ## Context
 
-- **Current state:** The codebase is a single-file JavaScript Node-RED contrib node (`postgrestor.js` 182 lines, `postgrestor.html` 441 lines). It works but is unmaintained.
-- **Dependencies:** `pg` ^8.16.2, `mustache` ^4.2.0, `eslint` 6.8.0, `eslint-config-google` 0.14.0
-- **Licensing:** GNU AGPL v3 — published as `@topcs/node-red-contrib-postgres`
-- **Known issues** documented in `.planning/codebase/CONCERNS.md` — zero tests, dead myPool variable, listener connection leak, outdated ESLint/CI, commented-out HTML code, dead output config, locale swap bug
-- **User's top priorities:** transactions, streaming/cursor mode, auto-reconnect listener
+- **Shipped:** v1.0 MVP — 3 phases, 9 plans, 25 tasks, 137 tests
+- **Codebase:** ~2,500 LOC TypeScript, fully strict mode, zero JavaScript source files
+- **Dependencies:** pg ^8.16.2, mustache ^4.2.0, pg-format ^1.0.4, pg-copy-streams ^7.0.0
+- **Test coverage:** 7 test suites, 137 tests, 0 failures
+- **Build:** `tsc` clean exit 0, dist/ produced
+- **Key files:** src/nodes/PostgresNode.ts (transaction + cursor + COPY + retry), src/nodes/PostgresListenerNode.ts (listenLoop), src/nodes/PostgresDBNode.ts (pool + sslmode + health), src/lib/types.ts (all interfaces)
 
 ## Constraints
 
 - **Runtime:** Node.js >= 18.0.0, Node-RED >= 3.0.0
-- **Database:** PostgreSQL only — no multi-database abstraction planned
-- **TypeScript:** Full migration (no gradual `.js` + `.d.ts` hybrid)
-- **ESLint:** 9.x flat config (not 8.x legacy)
-- **Testing:** Jest with ts-jest
-- **CI:** None for now — remove Azure pipeline, add GitHub Actions later
+- **Database:** PostgreSQL only
+- **TypeScript:** Full migration complete (strict: true, ES2022, CommonJS)
+- **ESLint:** 9.x flat config
+- **Testing:** Jest + ts-jest
+- **CI:** None currently
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| TypeScript migration | Modernization, type safety, better DX | — Pending |
-| ESLint 9.x flat config | Maintained, modern, replaces deprecated 6.8.0 | — Pending |
-| Jest for testing | Most popular Node.js test framework, ts-jest support | — Pending |
+| TypeScript migration | Modernization, type safety, better DX | ✓ Good |
+| ESLint 9.x flat config | Maintained, modern, replaces deprecated 6.8.0 | ✓ Good |
+| Jest for testing | Most popular Node.js test framework, ts-jest support | ✓ Good |
 | No CI for now | Remove dead Azure pipeline; add GitHub Actions in future | — Pending |
-| Full modernization | User chose full revival with new features | — Pending |
+| Full modernization | User chose full revival with new features | ✓ Good |
+| DECLARE/FETCH instead of pg-cursor | Human checkpoint rejected pg-cursor (SUS flag) | ✓ Good |
+| pg-format %I for channel sanitization | Prevents SQL injection in LISTEN/UNLISTEN | ✓ Good |
+| D-02 first output:true wins | Transaction semantics: first output:true entry's rows in msg.payload | ✓ Good |
+| D-10 retry exclusion | Cursor and COPY paths bypass retry (early return) | ✓ Good |
+| D-08 jittered exponential backoff | 500ms base, 30s max, 2x multiplier, full jitter | ✓ Good |
 
 ## Evolution
 
@@ -116,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-10 after initialization*
+*Last updated: 2026-06-10 after v1.0 milestone*
