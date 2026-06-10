@@ -33,7 +33,7 @@ export function getField(
     case 'bool': {
       try {
         return JSON.parse(value as string);
-      } catch (_e) {
+      } catch {
         return value === 'true';
       }
     }

@@ -7,7 +7,9 @@ const config: Config = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json'
+    }]
   },
   collectCoverageFrom: ['src/**/*.ts', '!src/**/__tests__/**']
 };
