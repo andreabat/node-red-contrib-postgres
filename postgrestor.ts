@@ -1,5 +1,6 @@
 import { PostgresDBNode } from './src/nodes/PostgresDBNode';
 import { PostgresNode } from './src/nodes/PostgresNode';
+import { PostgresListenerNode } from './src/nodes/PostgresListenerNode';
 import { setRED } from './src/lib/red';
 
 interface Red {
@@ -19,4 +20,5 @@ export = function (RED: Red) {
     }
   });
   RED.nodes.registerType('PostgresNode', PostgresNode);
+  RED.nodes.registerType('PostgresListenerNode', PostgresListenerNode);
 };
