@@ -20,10 +20,24 @@ jest.mock('mustache', () => ({
   render: (...args: any[]) => mockMustacheRender(...args)
 }));
 
+// Mock named params and error formatter to verify they are called correctly
+const mockBindNamedParams = jest.fn().mockReturnValue([]);
+jest.mock('../../lib/params', () => ({
+  extractNamedParams: jest.fn().mockReturnValue(['1', '2']),
+  bindNamedParams: (...args: any[]) => mockBindNamedParams(...args)
+}));
+
+const mockFormatError = jest.fn().mockReturnValue({ message: 'mock error' });
+jest.mock('../../lib/errorFormatter', () => ({
+  formatError: (...args: any[]) => mockFormatError(...args)
+}));
+
 import type { PostgresNodeConfig } from '../../lib/types';
 
 import { PostgresNode } from '../PostgresNode';
 import { setRED } from '../../lib/red';
+import { bindNamedParams } from '../../lib/params';
+import { formatError } from '../../lib/errorFormatter';
 
 describe('PostgresNode', () => {
   let redRuntime: any;
@@ -34,6 +48,8 @@ describe('PostgresNode', () => {
     jest.useFakeTimers();
 
     mockMustacheRender.mockReturnValue('SELECT 1');
+    mockBindNamedParams.mockReturnValue([]);
+    mockFormatError.mockReturnValue({ message: 'mock error' });
 
     // Build a mock RED runtime
     redRuntime = {
@@ -59,6 +75,12 @@ describe('PostgresNode', () => {
       query: 'SELECT * FROM users WHERE id = 1',
       PostgresDBNode: 'config-node-id',
       throwErrors: false,
+      useNamedParams: false,
+      queryTimeout: '0',
+      queryTimeoutFieldType: 'num',
+      mapNumeric: false,
+      mapTimestamptz: false,
+      parseJsonb: false,
       ...overrides
     };
   }
@@ -397,6 +419,325 @@ describe('PostgresNode', () => {
       // node.error should have been called with the release error
       expect(context.error).toHaveBeenCalledWith(
         expect.stringContaining('release failed')
+      );
+    });
+  });
+
+  describe('named parameter binding', () => {
+    it('should call bindNamedParams when useNamedParams is on and msg.params is object', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+      mockMustacheRender.mockReturnValue('SELECT * WHERE id = $1 AND name = $2');
+      mockBindNamedParams.mockReturnValue([42, 'Alice']);
+
+      const config = buildConfig({ useNamedParams: true });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({ params: { name: 'Alice', id: 42 } });
+
+      expect(bindNamedParams).toHaveBeenCalledWith(
+        'SELECT * WHERE id = $1 AND name = $2',
+        { name: 'Alice', id: 42 }
+      );
+    });
+
+    it('should pass positional array to client.query when useNamedParams is on', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+      mockBindNamedParams.mockReturnValue([42, 'Alice']);
+
+      const config = buildConfig({ useNamedParams: true });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({ params: { name: 'Alice', id: 42 } });
+
+      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [42, 'Alice']);
+    });
+
+    it('should pass msg.params array through unchanged when useNamedParams is falsy', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ useNamedParams: false });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({ params: [1, 2, 3] });
+
+      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [1, 2, 3]);
+      expect(bindNamedParams).not.toHaveBeenCalled();
+    });
+
+    it('should pass msg.params array through unchanged when params is array', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ useNamedParams: true });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({ params: [10, 20] });
+
+      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [10, 20]);
+      expect(bindNamedParams).not.toHaveBeenCalled();
+    });
+
+    it('should run Mustache rendering before named parameter binding', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+      mockBindNamedParams.mockReturnValue([1]);
+
+      const config = buildConfig({ useNamedParams: true, query: 'SELECT * FROM {{msg.table}} WHERE id = $1' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      // Track the call order: Mustache should be called before bindNamedParams
+      const callOrder: string[] = [];
+      mockMustacheRender.mockImplementation((template: string) => {
+        callOrder.push('mustache');
+        return 'SELECT * FROM users WHERE id = $1';
+      });
+      mockBindNamedParams.mockImplementation(() => {
+        callOrder.push('bindNamedParams');
+        return [1];
+      });
+
+      await runInputAndWait({ table: 'users', params: { id: 1 } });
+
+      expect(callOrder).toEqual(['mustache', 'bindNamedParams']);
+    });
+  });
+
+  describe('structured error handling', () => {
+    it('should call formatError with pg-style error on query failure', async () => {
+      const pgErr = new Error('relation does not exist') as any;
+      pgErr.code = '42P01';
+      pgErr.detail = 'Relation users not found';
+      pgErr.constraint = 'users_pkey';
+      pgErr.table = 'users';
+      mockClient.query.mockRejectedValue(pgErr);
+
+      const config = buildConfig();
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(formatError).toHaveBeenCalledWith(pgErr);
+    });
+
+    it('should set msg.error with structured error fields when throwErrors=false', async () => {
+      const pgErr = new Error('dup key') as any;
+      pgErr.code = '23505';
+      pgErr.detail = 'Key (id)=(1) already exists.';
+      pgErr.constraint = 'users_pkey';
+      pgErr.table = 'users';
+      mockClient.query.mockRejectedValue(pgErr);
+      mockFormatError.mockReturnValue({
+        message: 'dup key',
+        code: '23505',
+        detail: 'Key (id)=(1) already exists.',
+        constraint: 'users_pkey',
+        table: 'users'
+      });
+
+      const config = buildConfig();
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.error.code).toBe('23505');
+      expect(outputMsg.error.detail).toBe('Key (id)=(1) already exists.');
+      expect(outputMsg.error.constraint).toBe('users_pkey');
+      expect(outputMsg.error.table).toBe('users');
+    });
+
+    it('should preserve dual-path error handling with structured errors (throwErrors=true)', async () => {
+      const pgErr = new Error('fail') as any;
+      pgErr.code = '42P01';
+      pgErr.detail = 'detail text';
+      mockClient.query.mockRejectedValue(pgErr);
+      mockFormatError.mockReturnValue({
+        message: 'fail',
+        code: '42P01',
+        detail: 'detail text'
+      });
+
+      const config = buildConfig({ throwErrors: true });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      const inputMsg = { payload: 'test' };
+      await runInputAndWait(inputMsg);
+
+      // node.error called with structuredError and msg (halt flow)
+      expect(context.error).toHaveBeenCalledWith(
+        expect.objectContaining({ code: '42P01' }),
+        inputMsg
+      );
+      expect(context.send).toHaveBeenCalledWith(null);
+    });
+
+    it('should preserve dual-path error handling with structured errors (throwErrors=false)', async () => {
+      const pgErr = new Error('fail') as any;
+      pgErr.code = '42P01';
+      pgErr.detail = 'detail text';
+      mockClient.query.mockRejectedValue(pgErr);
+      mockFormatError.mockReturnValue({
+        message: 'fail',
+        code: '42P01',
+        detail: 'detail text'
+      });
+
+      const config = buildConfig({ throwErrors: false });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // node.error called with structuredError only (no second arg)
+      expect(context.error).toHaveBeenCalledWith(
+        expect.objectContaining({ detail: 'detail text' })
+      );
+      // msg.error has structured error
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.error).toEqual(expect.objectContaining({ code: '42P01' }));
+    });
+
+    it('should detect query timeout errors (code 57014) and format accordingly', async () => {
+      const timeoutErr = new Error('canceling statement due to statement timeout') as any;
+      timeoutErr.code = '57014';
+      timeoutErr.detail = '';
+      mockClient.query.mockRejectedValue(timeoutErr);
+      mockFormatError.mockReturnValue({
+        message: 'Query timeout after 5000ms',
+        code: '57014'
+      });
+
+      const config = buildConfig({ queryTimeout: '5000' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(formatError).toHaveBeenCalledWith(timeoutErr);
+    });
+  });
+
+  describe('query timeout', () => {
+    it('should not set statement_timeout when queryTimeout is 0', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ queryTimeout: '0' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Only the main query should be called, no SET statement_timeout
+      const queryCalls = mockClient.query.mock.calls.filter(
+        (call: any[]) => typeof call[0] === 'string' && call[0].includes('statement_timeout')
+      );
+      expect(queryCalls.length).toBe(0);
+    });
+
+    it('should call SET statement_timeout when queryTimeout > 0', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ queryTimeout: '5000' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const setCalls = mockClient.query.mock.calls.filter(
+        (call: any[]) => typeof call[0] === 'string' && call[0].includes('statement_timeout')
+      );
+      expect(setCalls.length).toBe(2); // SET + RESET
+      expect(setCalls[0]![0]).toBe('SET statement_timeout = 5000');
+    });
+
+    it('should reset statement_timeout to 0 in finally block', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ queryTimeout: '5000' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const setCalls = mockClient.query.mock.calls.filter(
+        (call: any[]) => typeof call[0] === 'string' && call[0].includes('statement_timeout')
+      );
+      expect(setCalls.length).toBe(2);
+      expect(setCalls[1]![0]).toBe('SET statement_timeout = 0');
+    });
+
+    it('should call client.release() even if SET statement_timeout reset fails', async () => {
+      // Main query succeeds, but reset fails
+      mockClient.query
+        .mockResolvedValueOnce({}) // SET statement_timeout = 5000
+        .mockResolvedValueOnce({ command: 'SELECT', rowCount: 0, rows: [] }) // main query
+        .mockRejectedValueOnce(new Error('no permission')); // SET statement_timeout = 0 fails
+
+      const config = buildConfig({ queryTimeout: '5000' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(mockClient.release).toHaveBeenCalledTimes(1);
+    });
+
+    it('should proceed with query if SET statement_timeout fails (e.g., permission denied)', async () => {
+      // SET fails, but query should still execute
+      mockClient.query
+        .mockRejectedValueOnce(new Error('permission denied')) // SET fails
+        .mockResolvedValueOnce({ command: 'SELECT', rowCount: 5, rows: [] }); // query succeeds
+
+      const config = buildConfig({ queryTimeout: '5000' });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Query still executed
+      const queryCalls = mockClient.query.mock.calls.filter(
+        (call: any[]) => typeof call[0] === 'string' && !call[0].includes('statement_timeout')
+      );
+      expect(queryCalls.length).toBe(1);
+      // Status should be green (query succeeded)
+      expect(context.status).toHaveBeenCalledWith(
+        expect.objectContaining({ fill: 'green' })
       );
     });
   });
