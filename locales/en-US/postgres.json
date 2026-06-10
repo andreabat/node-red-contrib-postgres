@@ -1,5 +1,5 @@
 {
-  "postgrestor": {
+  "postgres": {
     "label": {
       "name": "Name",
       "host": "Host",

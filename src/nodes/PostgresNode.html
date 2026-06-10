@@ -2,109 +2,109 @@
   <div class="form-row">
     <label for="node-input-name">
       <i class="icon-tag"></i>
-      <span data-i18n="postgrestor.label.name"></span>
+      <span data-i18n="postgres.label.name"></span>
     </label>
     <input type="text" id="node-input-name" data-i18n="[placeholder]node-red:common.label.name"> </div>
   <div class="form-row">
     <label for="node-input-PostgresDBNode">
       <i class="fa fa-server"></i>
-      <span data-i18n="postgrestor.label.server"></span>
+      <span data-i18n="postgres.label.server"></span>
     </label>
     <input type="text" id="node-input-PostgresDBNode">
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-throwErrors" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-throwErrors">
-      <span data-i18n="postgrestor.label.throwErrors">Throw Exception</span>
+      <span data-i18n="postgres.label.throwErrors">Throw Exception</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-useNamedParams" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-useNamedParams">
-      <span data-i18n="postgrestor.label.useNamedParams">Named Parameters</span>
+      <span data-i18n="postgres.label.useNamedParams">Named Parameters</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-transactionMode" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-transactionMode">
-      <span data-i18n="postgrestor.label.transactionMode">Transaction Mode</span>
+      <span data-i18n="postgres.label.transactionMode">Transaction Mode</span>
     </label>
   </div>
   <div class="form-row">
-    <label><span data-i18n="postgrestor.section.advanced">Advanced</span></label>
+    <label><span data-i18n="postgres.section.advanced">Advanced</span></label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-cursorMode" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-cursorMode">
-      <span data-i18n="postgrestor.label.cursorMode">Cursor Mode</span>
+      <span data-i18n="postgres.label.cursorMode">Cursor Mode</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-copyMode" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-copyMode">
-      <span data-i18n="postgrestor.label.copyMode">COPY Mode</span>
+      <span data-i18n="postgres.label.copyMode">COPY Mode</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-retryEnabled" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-retryEnabled">
-      <span data-i18n="postgrestor.label.retryEnabled">Retry on Transient Errors</span>
+      <span data-i18n="postgres.label.retryEnabled">Retry on Transient Errors</span>
     </label>
   </div>
   <div class="form-row">
     <label for="node-input-queryTimeout">
       <i class="fa fa-clock-o"></i>
-      <span data-i18n="postgrestor.label.queryTimeout">Query Timeout (ms)</span>
+      <span data-i18n="postgres.label.queryTimeout">Query Timeout (ms)</span>
     </label>
     <input type="text" id="node-input-queryTimeout" style="width: 70%;">
     <input type="hidden" id="node-input-queryTimeoutFieldType">
   </div>
   <div class="form-row">
     <label for="node-input-cursorBatchSize">
-      <span data-i18n="postgrestor.label.cursorBatchSize">Cursor Batch Size</span>
+      <span data-i18n="postgres.label.cursorBatchSize">Cursor Batch Size</span>
     </label>
     <input type="text" id="node-input-cursorBatchSize" style="width: 70%;">
     <input type="hidden" id="node-input-cursorBatchSizeFieldType">
   </div>
   <div class="form-row">
     <label for="node-input-maxRetries">
-      <span data-i18n="postgrestor.label.maxRetries">Max Retries</span>
+      <span data-i18n="postgres.label.maxRetries">Max Retries</span>
     </label>
     <input type="text" id="node-input-maxRetries" style="width: 70%;">
     <input type="hidden" id="node-input-maxRetriesFieldType">
   </div>
   <div class="form-row">
     <label for="node-input-retryBaseDelay">
-      <span data-i18n="postgrestor.label.retryBaseDelay">Retry Base Delay (ms)</span>
+      <span data-i18n="postgres.label.retryBaseDelay">Retry Base Delay (ms)</span>
     </label>
     <input type="text" id="node-input-retryBaseDelay" style="width: 70%;">
     <input type="hidden" id="node-input-retryBaseDelayFieldType">
   </div>
   <div class="form-row">
-    <label><span data-i18n="postgrestor.section.typeMapping">Type Mapping</span></label>
+    <label><span data-i18n="postgres.section.typeMapping">Type Mapping</span></label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-mapNumeric" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-mapNumeric">
-      <span data-i18n="postgrestor.label.mapNumeric">Map numeric → number</span>
+      <span data-i18n="postgres.label.mapNumeric">Map numeric → number</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-mapTimestamptz" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-mapTimestamptz">
-      <span data-i18n="postgrestor.label.mapTimestamptz">Map timestamptz → ISO 8601</span>
+      <span data-i18n="postgres.label.mapTimestamptz">Map timestamptz → ISO 8601</span>
     </label>
   </div>
   <div class="form-row">
     <input type="checkbox" id="node-input-parseJsonb" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-parseJsonb">
-      <span data-i18n="postgrestor.label.parseJsonb">Parse jsonb → object</span>
+      <span data-i18n="postgres.label.parseJsonb">Parse jsonb → object</span>
     </label>
   </div>
   <div class="form-row" style="position: relative; margin-bottom: 0px;">
     <label for="node-input-query">
       <i class="fa fa-file-code-o"></i>
-      <span data-i18n="postgrestor.label.query"></span>
+      <span data-i18n="postgres.label.query"></span>
     </label>
     <input type="hidden" id="node-input-query" autofocus="autofocus"> </div>
   <div class="form-row node-text-editor-row">

@@ -2,16 +2,16 @@
   <div class="form-row">
     <label for="node-config-input-name">
       <i class="fa fa-tag"></i>
-      <span data-i18n="postgrestor.label.name"></span>
+      <span data-i18n="postgres.label.name"></span>
     </label>
-    <input type="text" id="node-config-input-name" data-i18n="[placeholder]postgrestor.placeholder.name">
+    <input type="text" id="node-config-input-name" data-i18n="[placeholder]postgres.placeholder.name">
   </div>
   <div class="form-row">
     <label for="node-config-input-throwErrors">
       <i class="fa fa-exclamation-triangle"></i>
-      <span data-i18n="postgrestor.label.throwErrors">Throw Exception</span>
+      <span data-i18n="postgres.label.throwErrors">Throw Exception</span>
     </label>
-    <input type="checkbox" id="node-config-input-throwErrors" data-i18n="[placeholder]postgrestor.placeholder.throwErrors">
+    <input type="checkbox" id="node-config-input-throwErrors" data-i18n="[placeholder]postgres.placeholder.throwErrors">
     <input type="hidden" id="node-config-input-throwErrorsFieldType">
   </div>
   <div class="form-row">
@@ -23,68 +23,68 @@
       <div class="form-row">
         <label for="node-config-input-databaseSource">
           <i class="fa fa-link"></i>
-          <span data-i18n="postgrestor.label.databaseSource"></span>
+          <span data-i18n="postgres.label.databaseSource"></span>
         </label>
         <div style="display: inline-block; vertical-align: top;">
           <input type="radio" id="postgrestor-dbsource-manual" name="databaseSource" value="manual" checked>
-          <label for="postgrestor-dbsource-manual" data-i18n="postgrestor.databaseSource.manual" style="width: auto; display: inline;"></label>
+          <label for="postgrestor-dbsource-manual" data-i18n="postgres.databaseSource.manual" style="width: auto; display: inline;"></label>
           <input type="radio" id="postgrestor-dbsource-url" name="databaseSource" value="url" style="margin-left: 12px;">
-          <label for="postgrestor-dbsource-url" data-i18n="postgrestor.databaseSource.url" style="width: auto; display: inline;"></label>
+          <label for="postgrestor-dbsource-url" data-i18n="postgres.databaseSource.url" style="width: auto; display: inline;"></label>
         </div>
       </div>
       <div id="postgrestor-manual-fields">
         <div class="form-row">
           <label for="node-config-input-host">
             <i class="fa fa-server"></i>
-            <span data-i18n="postgrestor.label.host"></span>
+            <span data-i18n="postgres.label.host"></span>
           </label>
-          <input type="text" id="node-config-input-host" data-i18n="[placeholder]postgrestor.placeholder.host" style="width: 80%;">
+          <input type="text" id="node-config-input-host" data-i18n="[placeholder]postgres.placeholder.host" style="width: 80%;">
           <input type="hidden" id="node-config-input-hostFieldType">
         </div>
         <div class="form-row">
           <label for="node-config-input-port">
             <i class="fa fa-plug"></i>
-            <span data-i18n="postgrestor.label.port"></span>
+            <span data-i18n="postgres.label.port"></span>
           </label>
-          <input type="text" id="node-config-input-port" data-i18n="[placeholder]postgrestor.placeholder.port" style="width: 80%;">
+          <input type="text" id="node-config-input-port" data-i18n="[placeholder]postgres.placeholder.port" style="width: 80%;">
           <input type="hidden" id="node-config-input-portFieldType">
         </div>
         <div class="form-row">
           <label for="node-config-input-database">
             <i class="fa fa-database"></i>
-            <span data-i18n="postgrestor.label.database"></span>
+            <span data-i18n="postgres.label.database"></span>
           </label>
-          <input type="text" id="node-config-input-database" data-i18n="[placeholder]postgrestor.placeholder.database" style="width: 80%;">
+          <input type="text" id="node-config-input-database" data-i18n="[placeholder]postgres.placeholder.database" style="width: 80%;">
           <input type="hidden" id="node-config-input-databaseFieldType">
         </div>
       </div>
       <div class="form-row" id="postgrestor-databaseUrl-row" style="display: none;">
-        <label for="node-config-input-databaseUrl" data-i18n="[title]postgrestor.title.databaseUrl">
+        <label for="node-config-input-databaseUrl" data-i18n="[title]postgres.title.databaseUrl">
           <i class="fa fa-link"></i>
-          <span data-i18n="postgrestor.label.databaseUrl"></span>
+          <span data-i18n="postgres.label.databaseUrl"></span>
         </label>
-        <input type="text" id="node-config-input-databaseUrl" data-i18n="[placeholder]postgrestor.placeholder.databaseUrl" style="width: 80%;">
+        <input type="text" id="node-config-input-databaseUrl" data-i18n="[placeholder]postgres.placeholder.databaseUrl" style="width: 80%;">
         <input type="hidden" id="node-config-input-databaseUrlFieldType">
       </div>
       <div class="form-row">
-        <label for="node-config-input-sslmode" data-i18n="[title]postgrestor.title.sslmode">
+        <label for="node-config-input-sslmode" data-i18n="[title]postgres.title.sslmode">
           <i class="fa fa-shield"></i>
-          <span data-i18n="postgrestor.label.sslmode"></span>
+          <span data-i18n="postgres.label.sslmode"></span>
         </label>
         <select id="node-config-input-sslmode" style="width: auto; min-width: 130px;">
-          <option value="disable" data-i18n="postgrestor.sslmode.disable"></option>
-          <option value="require" data-i18n="postgrestor.sslmode.require"></option>
-          <option value="verify-ca" data-i18n="postgrestor.sslmode.verify-ca"></option>
-          <option value="verify-full" data-i18n="postgrestor.sslmode.verify-full"></option>
+          <option value="disable" data-i18n="postgres.sslmode.disable"></option>
+          <option value="require" data-i18n="postgres.sslmode.require"></option>
+          <option value="verify-ca" data-i18n="postgres.sslmode.verify-ca"></option>
+          <option value="verify-full" data-i18n="postgres.sslmode.verify-full"></option>
         </select>
         <input type="hidden" id="node-config-input-sslmodeFieldType">
       </div>
       <div class="form-row" id="postgrestor-ssl-deprecated-row" style="display: none;">
         <label for="node-config-input-ssl" style="width: auto; margin-right: 72px;">
-          <span data-i18n="postgrestor.label.sslDeprecated"></span>
+          <span data-i18n="postgres.label.sslDeprecated"></span>
         </label>
         <input type="checkbox" id="node-config-input-ssl" style="display: inline-block; width: auto; vertical-align: top;" disabled>
-        <span style="color: #999; font-size: 0.85em; margin-left: 8px;" data-i18n="postgrestor.title.sslDeprecated"></span>
+        <span style="color: #999; font-size: 0.85em; margin-left: 8px;" data-i18n="postgres.title.sslDeprecated"></span>
         <input type="hidden" id="node-config-input-sslFieldType">
       </div>
     </div>
@@ -93,17 +93,17 @@
       <div class="form-row">
         <label for="node-config-input-user">
           <i class="fa fa-user"></i>
-          <span data-i18n="postgrestor.label.user"></span>
+          <span data-i18n="postgres.label.user"></span>
         </label>
-        <input type="text" id="node-config-input-user" data-i18n="[placeholder]postgrestor.placeholder.user" style="width: 80%;">
+        <input type="text" id="node-config-input-user" data-i18n="[placeholder]postgres.placeholder.user" style="width: 80%;">
       </div>
 
        <div class="form-row">
         <label for="node-config-input-password">
           <i class="fa fa-lock"></i>
-          <span data-i18n="postgrestor.label.password"></span>
+          <span data-i18n="postgres.label.password"></span>
         </label>
-        <input type="password" id="node-config-input-password" data-i18n="[placeholder]postgrestor.placeholder.password" style="width: 80%;">
+        <input type="password" id="node-config-input-password" data-i18n="[placeholder]postgres.placeholder.password" style="width: 80%;">
 
       </div>
 
@@ -111,66 +111,66 @@
         <div class="form-row">
           <label for="node-config-input-sslCa">
             <i class="fa fa-certificate"></i>
-            <span data-i18n="postgrestor.label.sslCa"></span>
+            <span data-i18n="postgres.label.sslCa"></span>
           </label>
-          <textarea id="node-config-input-sslCa" data-i18n="[placeholder]postgrestor.placeholder.sslCa" style="width: 80%; height: 80px;"></textarea>
+          <textarea id="node-config-input-sslCa" data-i18n="[placeholder]postgres.placeholder.sslCa" style="width: 80%; height: 80px;"></textarea>
         </div>
         <div class="form-row">
           <label for="node-config-input-sslCert">
             <i class="fa fa-file-text"></i>
-            <span data-i18n="postgrestor.label.sslCert"></span>
+            <span data-i18n="postgres.label.sslCert"></span>
           </label>
-          <textarea id="node-config-input-sslCert" data-i18n="[placeholder]postgrestor.placeholder.sslCert" style="width: 80%; height: 80px;"></textarea>
+          <textarea id="node-config-input-sslCert" data-i18n="[placeholder]postgres.placeholder.sslCert" style="width: 80%; height: 80px;"></textarea>
         </div>
         <div class="form-row">
           <label for="node-config-input-sslKey">
             <i class="fa fa-key"></i>
-            <span data-i18n="postgrestor.label.sslKey"></span>
+            <span data-i18n="postgres.label.sslKey"></span>
           </label>
-          <textarea id="node-config-input-sslKey" data-i18n="[placeholder]postgrestor.placeholder.sslKey" style="width: 80%; height: 80px;"></textarea>
+          <textarea id="node-config-input-sslKey" data-i18n="[placeholder]postgres.placeholder.sslKey" style="width: 80%; height: 80px;"></textarea>
         </div>
       </div>
 
     </div>
     <div id="postgrestor-config-tab-pool" style="display: none;">
       <div class="form-row">
-        <label data-i18n="[title]postgrestor.title.max" for="node-config-input-max" style="width: 150px;">
+        <label data-i18n="[title]postgres.title.max" for="node-config-input-max" style="width: 150px;">
           <i class="fa fa-thermometer-full"></i>
-          <span data-i18n="postgrestor.label.max"></span>
+          <span data-i18n="postgres.label.max"></span>
         </label>
-        <input type="text" id="node-config-input-max" data-i18n="[placeholder]postgrestor.placeholder.max" style="width: 60%;">
+        <input type="text" id="node-config-input-max" data-i18n="[placeholder]postgres.placeholder.max" style="width: 60%;">
         <input type="hidden" id="node-config-input-maxFieldType">
       </div>
       <div class="form-row">
-        <label data-i18n="[title]postgrestor.title.min" for="node-config-input-min" style="width: 150px;">
+        <label data-i18n="[title]postgres.title.min" for="node-config-input-min" style="width: 150px;">
           <i class="fa fa-thermometer-empty"></i>
-          <span data-i18n="postgrestor.label.min"></span>
+          <span data-i18n="postgres.label.min"></span>
         </label>
-        <input type="text" id="node-config-input-min" data-i18n="[placeholder]postgrestor.placeholder.min" style="width: 60%;">
+        <input type="text" id="node-config-input-min" data-i18n="[placeholder]postgres.placeholder.min" style="width: 60%;">
         <input type="hidden" id="node-config-input-minFieldType">
       </div>
       <div class="form-row">
         <label for="node-config-input-idle" style="width: 150px;">
           <i class="fa fa-hourglass-half"></i>
-          <span data-i18n="postgrestor.label.idle"></span>
+          <span data-i18n="postgres.label.idle"></span>
         </label>
-        <input type="text" id="node-config-input-idle" data-i18n="[placeholder]postgrestor.placeholder.idle" style="width: 60%;">
+        <input type="text" id="node-config-input-idle" data-i18n="[placeholder]postgres.placeholder.idle" style="width: 60%;">
         <input type="hidden" id="node-config-input-idleFieldType">
       </div>
       <div class="form-row">
         <label for="node-config-input-connectionTimeout" style="width: 150px;">
           <i class="fa fa-hourglass-half"></i>
-          <span data-i18n="postgrestor.label.connectionTimeout"></span>
+          <span data-i18n="postgres.label.connectionTimeout"></span>
         </label>
-        <input type="text" id="node-config-input-connectionTimeout" data-i18n="[placeholder]postgrestor.placeholder.connectionTimeout" style="width: 60%;">
+        <input type="text" id="node-config-input-connectionTimeout" data-i18n="[placeholder]postgres.placeholder.connectionTimeout" style="width: 60%;">
         <input type="hidden" id="node-config-input-connectionTimeoutFieldType">
       </div>
       <div class="form-row">
-        <label for="node-config-input-statementTimeout" data-i18n="[title]postgrestor.title.statementTimeout" style="width: 150px;">
+        <label for="node-config-input-statementTimeout" data-i18n="[title]postgres.title.statementTimeout" style="width: 150px;">
           <i class="fa fa-clock-o"></i>
-          <span data-i18n="postgrestor.label.statementTimeout"></span>
+          <span data-i18n="postgres.label.statementTimeout"></span>
         </label>
-        <input type="text" id="node-config-input-statementTimeout" data-i18n="[placeholder]postgrestor.placeholder.statementTimeout" style="width: 60%;">
+        <input type="text" id="node-config-input-statementTimeout" data-i18n="[placeholder]postgres.placeholder.statementTimeout" style="width: 60%;">
         <input type="hidden" id="node-config-input-statementTimeoutFieldType">
       </div>
     </div>
@@ -280,15 +280,15 @@
       });
       tabs.addTab({
         id: "postgrestor-config-tab-connection",
-        label: this._('postgrestor.tab.connection')
+        label: this._('postgres.tab.connection')
       });
       tabs.addTab({
         id: "postgrestor-config-tab-security",
-        label: this._('postgrestor.tab.security')
+        label: this._('postgres.tab.security')
       });
       tabs.addTab({
         id: "postgrestor-config-tab-pool",
-        label: this._('postgrestor.tab.pool')
+        label: this._('postgres.tab.pool')
       });
       $("#node-config-input-host").typedInput({
         default: 'str',
