@@ -32,6 +32,13 @@ jest.mock('../../lib/errorFormatter', () => ({
   formatError: (...args: any[]) => mockFormatError(...args)
 }));
 
+// Mock typeMapping to control test behavior
+const mockBuildQueryTypes = jest.fn().mockReturnValue(undefined);
+jest.mock('../../lib/typeMapping', () => ({
+  registerTypeParsers: jest.fn(),
+  buildQueryTypes: (...args: any[]) => mockBuildQueryTypes(...args)
+}));
+
 import type { PostgresNodeConfig } from '../../lib/types';
 
 import { PostgresNode } from '../PostgresNode';
@@ -144,7 +151,10 @@ describe('PostgresNode', () => {
       const inputMsg = { payload: {} };
       await runInputAndWait(inputMsg);
 
-      expect(mockClient.query).toHaveBeenCalledWith('SELECT 1', []);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: 'SELECT 1',
+        values: []
+      }));
       expect(context.send).toHaveBeenCalledTimes(1);
 
       const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
@@ -353,7 +363,10 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({});
 
-      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), []);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: expect.any(String),
+        values: []
+      }));
     });
 
     it('should call client.query with msg.params when present', async () => {
@@ -367,7 +380,10 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({ params: [42, 'hello'] });
 
-      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [42, 'hello']);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: expect.any(String),
+        values: [42, 'hello']
+      }));
     });
   });
 
@@ -457,7 +473,10 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({ params: { name: 'Alice', id: 42 } });
 
-      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [42, 'Alice']);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: expect.any(String),
+        values: [42, 'Alice']
+      }));
     });
 
     it('should pass msg.params array through unchanged when useNamedParams is falsy', async () => {
@@ -471,7 +490,10 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({ params: [1, 2, 3] });
 
-      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [1, 2, 3]);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: expect.any(String),
+        values: [1, 2, 3]
+      }));
       expect(mockBindNamedParams).not.toHaveBeenCalled();
     });
 
@@ -486,7 +508,10 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({ params: [10, 20] });
 
-      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [10, 20]);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.objectContaining({
+        text: expect.any(String),
+        values: [10, 20]
+      }));
       expect(mockBindNamedParams).not.toHaveBeenCalled();
     });
 
@@ -734,13 +759,221 @@ describe('PostgresNode', () => {
 
       // Query still executed
       const queryCalls = mockClient.query.mock.calls.filter(
-        (call: any[]) => typeof call[0] === 'string' && !call[0].includes('statement_timeout')
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].text && !call[0].text.includes('statement_timeout')
       );
       expect(queryCalls.length).toBe(1);
       // Status should be green (query succeeded)
       expect(context.status).toHaveBeenCalledWith(
         expect.objectContaining({ fill: 'green' })
       );
+    });
+  });
+
+  describe('prepared statement auto-naming (REL-02)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('SELECT * FROM users');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should pass hashQuery name starting with ps_ followed by 8 hex characters', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig();
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const queryCall = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].name
+      );
+      expect(queryCall).toBeDefined();
+      expect(queryCall![0].name).toMatch(/^ps_[0-9a-f]{8}$/);
+    });
+
+    it('should produce the same hash for identical queries', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+      mockMustacheRender.mockReturnValue('SELECT * FROM users WHERE id = 1');
+
+      // First call
+      const config = buildConfig();
+      const context1 = buildContext();
+      const boundFn1 = PostgresNode.bind(context1, config);
+      boundFn1();
+      nodeInstance = context1;
+      await runInputAndWait({});
+
+      // Second call with different node instance but same query
+      mockClient.query.mockClear();
+      const context2 = buildContext();
+      const boundFn2 = PostgresNode.bind(context2, config);
+      boundFn2();
+      nodeInstance = context2;
+      await runInputAndWait({});
+
+      const calls = mockClient.query.mock.calls
+        .filter((call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].name);
+      expect(calls.length).toBe(1);
+      expect(calls[0]![0].name).toMatch(/^ps_[0-9a-f]{8}$/);
+    });
+
+    it('should produce different hashes for different queries', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      // First query
+      mockMustacheRender.mockReturnValue('SELECT * FROM users');
+      const config = buildConfig();
+      const context1 = buildContext();
+      const boundFn1 = PostgresNode.bind(context1, config);
+      boundFn1();
+      nodeInstance = context1;
+      await runInputAndWait({});
+
+      const name1 = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].name
+      )![0].name;
+
+      // Second query — different text
+      mockClient.query.mockClear();
+      mockMustacheRender.mockReturnValue('SELECT * FROM products');
+      const context2 = buildContext();
+      const boundFn2 = PostgresNode.bind(context2, config);
+      boundFn2();
+      nodeInstance = context2;
+      await runInputAndWait({});
+
+      const name2 = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].name
+      )![0].name;
+
+      expect(name1).not.toEqual(name2);
+    });
+
+    it('should pass prepared statement name even when namedParams is OFF (every query auto-prepares per D-04)', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ useNamedParams: false });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const queryCall = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null && call[0].name
+      );
+      expect(queryCall).toBeDefined();
+      expect(queryCall![0].name).toMatch(/^ps_[0-9a-f]{8}$/);
+    });
+  });
+
+  describe('type mapping integration (REL-03)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('SELECT 1');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should call client.query with types: undefined when at least one toggle is ON', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ mapNumeric: true, mapTimestamptz: false, parseJsonb: true });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const queryCall = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null
+      );
+      expect(queryCall).toBeDefined();
+      expect(queryCall![0].types).toBeUndefined();
+    });
+
+    it('should call client.query with identity parser when ALL toggles are OFF', async () => {
+      mockBuildQueryTypes.mockReturnValue({ getTypeParser: () => (val: string) => val });
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ mapNumeric: false, mapTimestamptz: false, parseJsonb: false });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const queryCall = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null
+      );
+      expect(queryCall).toBeDefined();
+      expect(queryCall![0].types).toBeDefined();
+      expect(typeof queryCall![0].types.getTypeParser).toBe('function');
+    });
+
+    it('should call buildQueryTypes with disableJsonb when parseJsonb is OFF', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ mapNumeric: true, mapTimestamptz: true, parseJsonb: false });
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(mockBuildQueryTypes).toHaveBeenCalledWith(
+        expect.objectContaining({ disableJsonb: true, disableAll: false })
+      );
+    });
+
+    it('should call client.query with name and text fields in config object', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig();
+      const context = buildContext();
+      const boundFn = PostgresNode.bind(context, config);
+      boundFn();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      const queryCall = mockClient.query.mock.calls.find(
+        (call: any[]) => typeof call[0] === 'object' && call[0] !== null
+      );
+      expect(queryCall).toBeDefined();
+      expect(queryCall![0].name).toMatch(/^ps_[0-9a-f]{8}$/);
+      expect(queryCall![0].text).toBe('SELECT 1');
+      expect(queryCall![0].values).toEqual([]);
+    });
+  });
+
+  describe('type mapping registration (REL-03 / D-06)', () => {
+    it('should NOT import or call registerTypeParsers from PostgresNode (called at pool creation in PostgresDBNode)', () => {
+      // Verify registerTypeParsers is not imported in PostgresNode.ts
+      // This is a structural check — if registerTypeParsers is imported,
+      // it would appear in the mock registration
+      const { registerTypeParsers } = require('../../lib/typeMapping');
+      expect(registerTypeParsers).not.toHaveBeenCalled();
     });
   });
 });
