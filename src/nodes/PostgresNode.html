@@ -31,12 +31,54 @@
     </label>
   </div>
   <div class="form-row">
+    <label><span data-i18n="postgrestor.section.advanced">Advanced</span></label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-cursorMode" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-cursorMode">
+      <span data-i18n="postgrestor.label.cursorMode">Cursor Mode</span>
+    </label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-copyMode" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-copyMode">
+      <span data-i18n="postgrestor.label.copyMode">COPY Mode</span>
+    </label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-retryEnabled" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-retryEnabled">
+      <span data-i18n="postgrestor.label.retryEnabled">Retry on Transient Errors</span>
+    </label>
+  </div>
+  <div class="form-row">
     <label for="node-input-queryTimeout">
       <i class="fa fa-clock-o"></i>
       <span data-i18n="postgrestor.label.queryTimeout">Query Timeout (ms)</span>
     </label>
     <input type="text" id="node-input-queryTimeout" style="width: 70%;">
     <input type="hidden" id="node-input-queryTimeoutFieldType">
+  </div>
+  <div class="form-row">
+    <label for="node-input-cursorBatchSize">
+      <span data-i18n="postgrestor.label.cursorBatchSize">Cursor Batch Size</span>
+    </label>
+    <input type="text" id="node-input-cursorBatchSize" style="width: 70%;">
+    <input type="hidden" id="node-input-cursorBatchSizeFieldType">
+  </div>
+  <div class="form-row">
+    <label for="node-input-maxRetries">
+      <span data-i18n="postgrestor.label.maxRetries">Max Retries</span>
+    </label>
+    <input type="text" id="node-input-maxRetries" style="width: 70%;">
+    <input type="hidden" id="node-input-maxRetriesFieldType">
+  </div>
+  <div class="form-row">
+    <label for="node-input-retryBaseDelay">
+      <span data-i18n="postgrestor.label.retryBaseDelay">Retry Base Delay (ms)</span>
+    </label>
+    <input type="text" id="node-input-retryBaseDelay" style="width: 70%;">
+    <input type="hidden" id="node-input-retryBaseDelayFieldType">
   </div>
   <div class="form-row">
     <label><span data-i18n="postgrestor.section.typeMapping">Type Mapping</span></label>
@@ -110,6 +152,33 @@
       },
       transactionMode: {
         value: false,
+      },
+      cursorMode: {
+        value: false,
+      },
+      copyMode: {
+        value: false,
+      },
+      cursorBatchSize: {
+        value: 100,
+      },
+      cursorBatchSizeFieldType: {
+        value: "num",
+      },
+      retryEnabled: {
+        value: false,
+      },
+      maxRetries: {
+        value: 3,
+      },
+      maxRetriesFieldType: {
+        value: "num",
+      },
+      retryBaseDelay: {
+        value: 100,
+      },
+      retryBaseDelayFieldType: {
+        value: "num",
       }
     },
     inputs: 1,
@@ -156,6 +225,26 @@
         type: this.queryTimeoutFieldType || 'num',
         types: ['num', 'flow', 'global'],
         typeField: "#node-input-queryTimeoutFieldType"
+      });
+
+      $("#node-input-cursorMode").prop("checked", this.cursorMode === true || this.cursorMode === 'true');
+      $("#node-input-copyMode").prop("checked", this.copyMode === true || this.copyMode === 'true');
+      $("#node-input-retryEnabled").prop("checked", this.retryEnabled === true || this.retryEnabled === 'true');
+
+      $("#node-input-cursorBatchSize").typedInput({
+        type: this.cursorBatchSizeFieldType || 'num',
+        types: ['num', 'flow', 'global'],
+        typeField: "#node-input-cursorBatchSizeFieldType"
+      });
+      $("#node-input-maxRetries").typedInput({
+        type: this.maxRetriesFieldType || 'num',
+        types: ['num', 'flow', 'global'],
+        typeField: "#node-input-maxRetriesFieldType"
+      });
+      $("#node-input-retryBaseDelay").typedInput({
+        type: this.retryBaseDelayFieldType || 'num',
+        types: ['num', 'flow', 'global'],
+        typeField: "#node-input-retryBaseDelayFieldType"
       });
     },
     oneditsave: function () {

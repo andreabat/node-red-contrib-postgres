@@ -52,12 +52,27 @@ export interface PostgresNodeConfig {
   mapTimestamptz: string | boolean;
   parseJsonb: string | boolean;
   transactionMode: string | boolean;
+  cursorMode: string | boolean;
+  copyMode: string | boolean;
+  cursorBatchSize: string;
+  cursorBatchSizeFieldType: string;
+  retryEnabled: string | boolean;
+  maxRetries: string;
+  maxRetriesFieldType: string;
+  retryBaseDelay: string;
+  retryBaseDelayFieldType: string;
 }
 
 export interface TransactionQuery {
   query: string;
   params?: Record<string, any>;
   output?: boolean;
+}
+
+export interface CursorBatch {
+  index: number;
+  rows: number;
+  total: number | null;
 }
 
 export interface PostgresListenerNodeConfig {

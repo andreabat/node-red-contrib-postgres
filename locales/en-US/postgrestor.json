@@ -30,7 +30,13 @@
       "parseJsonb": "Parse jsonb → object",
       "transactionMode": "Transaction Mode",
       "parseNotifyJson": "Auto-parse JSON NOTIFY payloads",
-      "channel": "Channel"
+      "channel": "Channel",
+      "cursorMode": "Cursor Mode",
+      "copyMode": "COPY Mode",
+      "cursorBatchSize": "Cursor Batch Size",
+      "retryEnabled": "Retry on Transient Errors",
+      "maxRetries": "Max Retries",
+      "retryBaseDelay": "Retry Base Delay (ms)"
     },
     "placeholder": {
       "name": "dbConnection",
@@ -48,7 +54,10 @@
       "sslCert": "Paste client certificate PEM content here",
       "sslKey": "Paste client key PEM content here",
       "statementTimeout": "30000",
-      "queryTimeout": "0"
+      "queryTimeout": "0",
+      "cursorBatchSize": "100",
+      "maxRetries": "3",
+      "retryBaseDelay": "100"
     },
     "tab": {
       "connection": "Connection",
@@ -68,7 +77,13 @@
       "mapTimestamptz": "Convert PostgreSQL timestamptz to ISO 8601 date string. Off: returns Date object.",
       "parseJsonb": "Auto-parse PostgreSQL jsonb columns to JavaScript objects. Off: returns raw jsonb string.",
       "transactionMode": "Execute msg.payload as an array of {query, params, output} entries atomically within a single transaction (BEGIN/COMMIT/ROLLBACK). First output:true wins.",
-      "parseNotifyJson": "Auto-parse NOTIFY payload as JSON. Falls back to raw string on parse failure. Default on."
+      "parseNotifyJson": "Auto-parse NOTIFY payload as JSON. Falls back to raw string on parse failure. Default on.",
+      "cursorMode": "Stream large SELECT results in batches via PostgreSQL cursor (DECLARE/FETCH). Non-SELECT queries ignore this toggle.",
+      "copyMode": "Use COPY protocol for high-performance CSV import/export. Detected from COPY FROM/TO SQL commands.",
+      "cursorBatchSize": "Number of rows to FETCH per cursor batch. Default 100.",
+      "retryEnabled": "Automatically retry queries on transient errors (deadlocks, serialization failures, connection drops).",
+      "maxRetries": "Maximum retry attempts before propagating error. Default 3.",
+      "retryBaseDelay": "Base delay in milliseconds for exponential backoff. Default 100ms."
     },
     "databaseSource": {
       "manual": "Manual",
@@ -81,7 +96,8 @@
       "verify-full": "verify-full"
     },
     "section": {
-      "typeMapping": "Type Mapping"
+      "typeMapping": "Type Mapping",
+      "advanced": "Advanced"
     }
   }
 }
