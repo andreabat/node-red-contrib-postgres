@@ -39,6 +39,26 @@ jest.mock('../../lib/typeMapping', () => ({
   buildQueryTypes: (...args: any[]) => mockBuildQueryTypes(...args)
 }));
 
+const mockPipeline = jest.fn().mockResolvedValue(undefined);
+jest.mock('node:stream/promises', () => ({
+  pipeline: (...args: any[]) => mockPipeline(...args)
+}));
+
+jest.mock('node:stream', () => {
+  const actual = jest.requireActual('node:stream');
+  return {
+    ...actual,
+    Readable: {
+      from: jest.fn().mockReturnValue(new actual.Readable({ read() { this.push(null); } }))
+    }
+  };
+});
+
+jest.mock('pg-copy-streams', () => ({
+  from: jest.fn().mockReturnValue({}),
+  to: jest.fn().mockReturnValue({})
+}));
+
 import type { PostgresNodeConfig } from '../../lib/types';
 
 import { PostgresNode } from '../PostgresNode';
@@ -87,6 +107,15 @@ describe('PostgresNode', () => {
       mapTimestamptz: false,
       parseJsonb: false,
       transactionMode: false,
+      cursorMode: false,
+      copyMode: false,
+      cursorBatchSize: '100',
+      cursorBatchSizeFieldType: 'num',
+      retryEnabled: false,
+      maxRetries: '3',
+      maxRetriesFieldType: 'num',
+      retryBaseDelay: '100',
+      retryBaseDelayFieldType: 'num',
       ...overrides
     };
   }
@@ -1264,6 +1293,240 @@ describe('PostgresNode', () => {
       const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
       expect(outputMsg.error).toBeDefined();
       expect(outputMsg.payload).toBeUndefined();
+    });
+  });
+
+  describe('cursor mode (DECLARE/FETCH)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('SELECT * FROM users');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should use DECLARE/FETCH and emit sequential batches', async () => {
+      // Mock the cursor queries: DECLARE, FETCH (2 batches), last FETCH (empty)
+      mockClient.query
+        .mockResolvedValueOnce({}) // DECLARE
+        .mockResolvedValueOnce({ command: 'FETCH', rows: [{ id: 1 }, { id: 2 }], rowCount: 2 }) // FETCH batch 0
+        .mockResolvedValueOnce({ command: 'FETCH', rows: [{ id: 3 }], rowCount: 1 }) // FETCH batch 1
+        .mockResolvedValueOnce({ command: 'FETCH', rows: [], rowCount: 0 }); // FETCH final (empty)
+
+      const config = buildConfig({ cursorMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({ payload: {} });
+
+      // DECLARE was called
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringMatching(/^DECLARE gsd_/)
+      );
+      // FETCH was called with batch size
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringMatching(/FETCH 100 FROM gsd_/)
+      );
+      // Multiple sends: batch messages + complete
+      const sendCalls = (context.send as jest.Mock).mock.calls;
+      // First batch
+      expect(sendCalls[0]![0]).toEqual(expect.objectContaining({
+        payload: [{ id: 1 }, { id: 2 }],
+        batch: { index: 0, rows: 2, total: 2 }
+      }));
+      // Second batch
+      expect(sendCalls[1]![0]).toEqual(expect.objectContaining({
+        payload: [{ id: 3 }],
+        batch: { index: 1, rows: 1, total: 3 }
+      }));
+      // Completion signal
+      expect(sendCalls[2]![0]).toEqual(expect.objectContaining({
+        payload: [],
+        complete: true,
+        total: 3
+      }));
+    });
+
+    it('should not use cursor for non-SELECT queries', async () => {
+      mockMustacheRender.mockReturnValue('INSERT INTO t VALUES(1)');
+      mockClient.query.mockResolvedValue({ command: 'INSERT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ cursorMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({ payload: {} });
+
+      // Should not call DECLARE
+      const declareCall = mockClient.query.mock.calls.find((c: any[]) => typeof c[0] === 'string' && c[0].startsWith('DECLARE'));
+      expect(declareCall).toBeUndefined();
+      // Single send (normal path)
+      expect(context.send).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('COPY mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('COPY t FROM STDIN');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+      mockPipeline.mockResolvedValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should use copyFrom for COPY FROM queries', async () => {
+      mockMustacheRender.mockReturnValue('COPY t FROM STDIN');
+
+      const config = buildConfig({ copyMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({ payload: 'csv,data\n' });
+
+      expect(mockPipeline).toHaveBeenCalled();
+      expect(context.status).toHaveBeenCalledWith(
+        expect.objectContaining({ text: 'COPY import complete' })
+      );
+    });
+
+    it('should not use COPY mode for non-COPY queries', async () => {
+      mockMustacheRender.mockReturnValue('SELECT 1');
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ copyMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(mockPipeline).not.toHaveBeenCalled();
+      expect(context.send).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('retry on transient errors', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('SELECT 1');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should retry on transient deadlock error (40P01)', async () => {
+      const deadlockErr = new Error('deadlock detected') as any;
+      deadlockErr.code = '40P01';
+
+      mockClient.query
+        .mockRejectedValueOnce(deadlockErr) // first attempt fails
+        .mockResolvedValueOnce({ command: 'SELECT', rowCount: 1, rows: [{ id: 1 }] }); // retry succeeds
+
+      const config = buildConfig({ retryEnabled: true, maxRetries: '3' });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Second call succeeded
+      expect(context.send).toHaveBeenCalledTimes(1);
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.payload.rowCount).toBe(1);
+    });
+
+    it('should not retry non-transient errors (syntax error)', async () => {
+      const syntaxErr = new Error('syntax error') as any;
+      syntaxErr.code = '42601';
+      mockClient.query.mockRejectedValueOnce(syntaxErr);
+      mockFormatError.mockReturnValue({ message: 'syntax error', code: '42601' });
+
+      const config = buildConfig({ retryEnabled: true, maxRetries: '3' });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Only 1 connection attempt (no retry)
+      expect(mockPoolConnect).toHaveBeenCalledTimes(1);
+      expect(context.error).toHaveBeenCalled();
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.error).toBeDefined();
+    });
+
+    it('should propagate error after max retries exhausted', async () => {
+      const deadlockErr = new Error('deadlock') as any;
+      deadlockErr.code = '40P01';
+      // 3 attempt failures (initial + 2 retries with maxRetries=2)
+      mockClient.query
+        .mockRejectedValueOnce(deadlockErr)
+        .mockRejectedValueOnce(deadlockErr)
+        .mockRejectedValueOnce(deadlockErr);
+      mockFormatError.mockReturnValue({ message: 'deadlock', code: '40P01' });
+
+      const config = buildConfig({ retryEnabled: true, maxRetries: '2' });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Should have tried (1 + maxRetries) = 3 connection attempts
+      expect(mockPoolConnect).toHaveBeenCalledTimes(3);
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.error).toBeDefined();
+    });
+
+    it('should NOT retry when retryEnabled is off', async () => {
+      const deadlockErr = new Error('deadlock') as any;
+      deadlockErr.code = '40P01';
+      mockClient.query.mockRejectedValueOnce(deadlockErr);
+
+      const config = buildConfig({ retryEnabled: false, maxRetries: '3' });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      expect(mockPoolConnect).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not retry cursor mode queries', async () => {
+      mockMustacheRender.mockReturnValue('SELECT * FROM users');
+      const deadlockErr = new Error('deadlock') as any;
+      deadlockErr.code = '40P01';
+      mockClient.query.mockRejectedValueOnce(deadlockErr);
+
+      const config = buildConfig({ cursorMode: true, retryEnabled: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({});
+
+      // Cursor path: only 1 connection (DECLARE fails, no retry)
+      expect(mockPoolConnect).toHaveBeenCalledTimes(1);
     });
   });
 });
