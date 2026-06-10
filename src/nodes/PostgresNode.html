@@ -13,11 +13,24 @@
     <input type="text" id="node-input-PostgresDBNode">
   </div>
   <div class="form-row">
-
-    <input type="checkbox" id="node-input-throwErrors"  style="display: inline-block; width: auto; vertical-align: top;">
+    <input type="checkbox" id="node-input-throwErrors" style="display: inline-block; width: auto; vertical-align: top;">
     <label for="node-input-throwErrors">
       <span data-i18n="postgrestor.label.throwErrors">Throw Exception</span>
     </label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-useNamedParams" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-useNamedParams">
+      <span data-i18n="postgrestor.label.useNamedParams">Named Parameters</span>
+    </label>
+  </div>
+  <div class="form-row">
+    <label for="node-input-queryTimeout">
+      <i class="fa fa-clock-o"></i>
+      <span data-i18n="postgrestor.label.queryTimeout">Query Timeout (ms)</span>
+    </label>
+    <input type="text" id="node-input-queryTimeout" style="width: 70%;">
+    <input type="hidden" id="node-input-queryTimeoutFieldType">
   </div>
   <div class="form-row" style="position: relative; margin-bottom: 0px;">
     <label for="node-input-query">
@@ -47,8 +60,17 @@
       outputs: {
         value: 1
       },
-      throwErrors:{
-        value:false,
+      throwErrors: {
+        value: false,
+      },
+      useNamedParams: {
+        value: false,
+      },
+      queryTimeout: {
+        value: 0,
+      },
+      queryTimeoutFieldType: {
+        value: "num",
       }
     },
     inputs: 1,
@@ -63,6 +85,7 @@
     },
     oneditprepare: function () {
       $("#node-input-throwErrors").prop("checked", this.throwErrors);
+      $("#node-input-useNamedParams").prop("checked", this.useNamedParams);
 
       this.editor = RED.editor.createEditor({
         id: 'node-input-editor',
@@ -70,6 +93,16 @@
         value: $("#node-input-query").val()
       });
       this.editor.focus();
+
+      // Initialize queryTimeout typedInput
+      if (this.queryTimeoutFieldType === undefined || this.queryTimeoutFieldType === '') {
+        this.queryTimeoutFieldType = 'num';
+      }
+      $("#node-input-queryTimeout").typedInput({
+        type: this.queryTimeoutFieldType || 'num',
+        types: ['num', 'flow', 'global'],
+        typeField: "#node-input-queryTimeoutFieldType"
+      });
     },
     oneditsave: function () {
       $("#node-input-query").val(this.editor.getValue());
