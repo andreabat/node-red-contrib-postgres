@@ -32,6 +32,27 @@
     <input type="text" id="node-input-queryTimeout" style="width: 70%;">
     <input type="hidden" id="node-input-queryTimeoutFieldType">
   </div>
+  <div class="form-row">
+    <label><span data-i18n="postgrestor.section.typeMapping">Type Mapping</span></label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-mapNumeric" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-mapNumeric">
+      <span data-i18n="postgrestor.label.mapNumeric">Map numeric → number</span>
+    </label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-mapTimestamptz" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-mapTimestamptz">
+      <span data-i18n="postgrestor.label.mapTimestamptz">Map timestamptz → ISO 8601</span>
+    </label>
+  </div>
+  <div class="form-row">
+    <input type="checkbox" id="node-input-parseJsonb" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-parseJsonb">
+      <span data-i18n="postgrestor.label.parseJsonb">Parse jsonb → object</span>
+    </label>
+  </div>
   <div class="form-row" style="position: relative; margin-bottom: 0px;">
     <label for="node-input-query">
       <i class="fa fa-file-code-o"></i>
@@ -71,6 +92,15 @@
       },
       queryTimeoutFieldType: {
         value: "num",
+      },
+      mapNumeric: {
+        value: false,
+      },
+      mapTimestamptz: {
+        value: false,
+      },
+      parseJsonb: {
+        value: true,
       }
     },
     inputs: 1,
@@ -90,9 +120,23 @@
       this.editor = RED.editor.createEditor({
         id: 'node-input-editor',
         mode: 'ace/mode/sql',
-        value: $("#node-input-query").val()
+        value: $("#node-input-query").val(),
+        options: {
+          showLineNumbers: true,
+          wrap: true,
+          useWorker: false,
+          maxLines: Infinity,
+          fontSize: 14,
+          enableBasicAutocompletion: true,
+          enableLiveAutocompletion: true,
+        }
       });
       this.editor.focus();
+
+      // Initialize type mapping checkbox states from current config
+      $("#node-input-mapNumeric").prop("checked", this.mapNumeric === true || this.mapNumeric === 'true');
+      $("#node-input-mapTimestamptz").prop("checked", this.mapTimestamptz === true || this.mapTimestamptz === 'true');
+      $("#node-input-parseJsonb").prop("checked", this.parseJsonb !== false && this.parseJsonb !== 'false');
 
       // Initialize queryTimeout typedInput
       if (this.queryTimeoutFieldType === undefined || this.queryTimeoutFieldType === '') {
