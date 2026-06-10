@@ -1,18 +1,20 @@
-// PostgresListenerNode tests — covers channel validation, LISTEN setup, notification
-// handling, close cleanup, JSON parsing, reconnection, and channel sanitization
+// PostgresListenerNode tests — direct pg.Client connections, not pool
 
 const mockClient = {
   query: jest.fn(),
-  release: jest.fn(),
+  connect: jest.fn(),
+  end: jest.fn(),
   on: jest.fn()
 };
-const mockPoolConnect = jest.fn().mockResolvedValue(mockClient) as jest.Mock;
-const mockPool = {
-  connect: mockPoolConnect
-};
+
+// Mock Client constructor that returns a fresh mockClient
+const MockClient = jest.fn(function (this: any) {
+  Object.assign(this, mockClient);
+}) as unknown as jest.Mock & { new (): typeof mockClient };
 
 jest.mock('pg', () => ({
-  Pool: jest.fn(() => mockPool)
+  Client: MockClient,
+  Pool: jest.fn(() => ({ options: { host: 'db', port: 5432, database: 'test', user: 'u', password: 'p' } }))
 }));
 
 jest.mock('pg-format', () => jest.fn((_: string, v: string) => `"${v}"`));
@@ -29,15 +31,15 @@ describe('PostgresListenerNode', () => {
     jest.clearAllMocks();
 
     mockClient.query.mockResolvedValue({});
-    mockClient.release.mockReturnValue(undefined);
-    mockPoolConnect.mockResolvedValue(mockClient);
+    mockClient.connect.mockResolvedValue(undefined);
+    mockClient.end.mockReturnValue(undefined);
 
     redRuntime = {
       nodes: {
         createNode: jest.fn(),
         registerType: jest.fn(),
         getNode: jest.fn().mockReturnValue({
-          pgPool: mockPool
+          pgPool: { options: { host: 'db', port: 5432, database: 'test', user: 'u', password: 'p' } }
         })
       }
     };
@@ -84,7 +86,6 @@ describe('PostgresListenerNode', () => {
         }
       }
     };
-    // Helper to trigger client error event (simulates connection drop)
     (context as any)._triggerClientError = function () {
       const onCalls = (mockClient.on as jest.Mock).mock.calls;
       for (const call of onCalls) {
@@ -109,25 +110,23 @@ describe('PostgresListenerNode', () => {
       boundFn();
 
       expect(context.status).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fill: 'red', shape: 'ring', text: 'Channel is required'
-        })
+        expect.objectContaining({ fill: 'red', shape: 'ring', text: 'Channel is required' })
       );
-      expect(mockPoolConnect).not.toHaveBeenCalled();
+      expect(MockClient).not.toHaveBeenCalled();
     });
   });
 
   describe('LISTEN setup', () => {
-    it('should connect to pool and set up LISTEN on sanitized channel', async () => {
+    it('should create a direct Client and set up LISTEN on sanitized channel', async () => {
       const config = buildConfig();
       const context = buildContext();
       PostgresListenerNode.bind(context, config)();
 
       await flushPromises();
 
-      expect(mockPoolConnect).toHaveBeenCalledTimes(1);
+      expect(MockClient).toHaveBeenCalledTimes(1);
+      expect(mockClient.connect).toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith('LISTEN "test_channel"');
-      expect(mockClient.on).toHaveBeenCalledWith('notification', expect.any(Function));
     });
 
     it('should set green status after successful LISTEN', async () => {
@@ -138,9 +137,7 @@ describe('PostgresListenerNode', () => {
       await flushPromises();
 
       expect(context.status).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fill: 'green', shape: 'ring', text: 'listening on test_channel'
-        })
+        expect.objectContaining({ fill: 'green', shape: 'ring', text: 'listening on test_channel' })
       );
     });
   });
@@ -196,8 +193,8 @@ describe('PostgresListenerNode', () => {
   });
 
   describe('reconnection', () => {
-    it('should show yellow reconnecting status after connection drop', async () => {
-      mockPoolConnect.mockResolvedValue(mockClient);
+    it('should show yellow reconnecting status after connection error', async () => {
+      mockClient.connect.mockResolvedValue(undefined);
       mockClient.query.mockResolvedValue({});
 
       const config = buildConfig();
@@ -212,31 +209,23 @@ describe('PostgresListenerNode', () => {
       mockClient.query.mockClear();
       mockClient.query.mockResolvedValue({});
 
-      // Trigger connection error
       context._triggerClientError();
       await flushPromises();
 
-      // Should show yellow reconnecting status
       expect(context.status).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fill: 'yellow',
-          shape: 'ring',
-          text: expect.stringContaining('reconnecting')
-        })
+        expect.objectContaining({ fill: 'yellow', shape: 'ring', text: expect.stringContaining('reconnecting') })
       );
     });
 
     it('should stop reconnection loop when closed during backoff', async () => {
-      mockPoolConnect.mockRejectedValueOnce(new Error('refused'));
-      mockPoolConnect.mockResolvedValueOnce(mockClient);
+      mockClient.connect.mockRejectedValueOnce(new Error('refused'));
+      mockClient.connect.mockResolvedValueOnce(undefined);
 
       const config = buildConfig();
       const context = buildContext();
       PostgresListenerNode.bind(context, config)();
 
       await flushPromises();
-
-      // Close the node immediately
       await context._triggerClose();
       await flushPromises();
     });
@@ -269,8 +258,8 @@ describe('PostgresListenerNode', () => {
     });
   });
 
-  describe('BUG-02 — close handler releases client', () => {
-    it('should trigger UNLISTEN and release client on close', async () => {
+  describe('close handler', () => {
+    it('should UNLISTEN and end client on close', async () => {
       const config = buildConfig();
       const context = buildContext();
       PostgresListenerNode.bind(context, config)();
@@ -278,13 +267,13 @@ describe('PostgresListenerNode', () => {
       await flushPromises();
 
       mockClient.query.mockClear();
-      mockClient.release.mockClear();
+      mockClient.end.mockClear();
       mockClient.query.mockResolvedValue({});
 
       await context._triggerClose();
 
       expect(mockClient.query).toHaveBeenCalledWith('UNLISTEN "test_channel"');
-      expect(mockClient.release).toHaveBeenCalledTimes(1);
+      expect(mockClient.end).toHaveBeenCalledTimes(1);
     });
 
     it('should clear status on close', async () => {
@@ -300,8 +289,8 @@ describe('PostgresListenerNode', () => {
     });
   });
 
-  describe('BUG-02 — UNLISTEN error resilience', () => {
-    it('should still release client when UNLISTEN fails', async () => {
+  describe('UNLISTEN error resilience', () => {
+    it('should still end client when UNLISTEN fails', async () => {
       const config = buildConfig();
       const context = buildContext();
       PostgresListenerNode.bind(context, config)();
@@ -309,7 +298,7 @@ describe('PostgresListenerNode', () => {
       await flushPromises();
 
       mockClient.query.mockClear();
-      mockClient.release.mockClear();
+      mockClient.end.mockClear();
       mockClient.query.mockRejectedValue(new Error('UNLISTEN failed'));
 
       await context._triggerClose();
@@ -317,10 +306,10 @@ describe('PostgresListenerNode', () => {
       expect(context.warn).toHaveBeenCalledWith(
         expect.stringContaining('Error during UNLISTEN')
       );
-      expect(mockClient.release).toHaveBeenCalledTimes(1);
+      expect(mockClient.end).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle release error gracefully', async () => {
+    it('should handle end error gracefully', async () => {
       const config = buildConfig();
       const context = buildContext();
       PostgresListenerNode.bind(context, config)();
@@ -328,22 +317,20 @@ describe('PostgresListenerNode', () => {
       await flushPromises();
 
       mockClient.query.mockClear();
-      mockClient.release.mockClear();
+      mockClient.end.mockClear();
       mockClient.query.mockResolvedValue({});
-      mockClient.release.mockImplementation(() => { throw new Error('release failed'); });
+      mockClient.end.mockImplementation(() => { throw new Error('end failed'); });
 
       await context._triggerClose();
 
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Error releasing listener client')
-      );
+      expect(context.warn).toHaveBeenCalledWith('Error closing listener client: end failed');
     });
   });
 
   describe('connect error', () => {
     it('should enter yellow reconnecting status on connection failure', async () => {
-      mockPoolConnect.mockRejectedValueOnce(new Error('connection refused'));
-      mockPoolConnect.mockResolvedValue(mockClient);
+      mockClient.connect.mockRejectedValueOnce(new Error('connection refused'));
+      mockClient.connect.mockResolvedValue(undefined);
 
       const config = buildConfig();
       const context = buildContext();
@@ -351,7 +338,6 @@ describe('PostgresListenerNode', () => {
 
       await flushPromises();
 
-      // Should show yellow reconnecting status
       expect(context.status).toHaveBeenCalledWith(
         expect.objectContaining({ fill: 'yellow', shape: 'ring' })
       );
@@ -419,12 +405,10 @@ describe('PostgresListenerNode', () => {
 
       await flushPromises();
 
-      // Trigger close while listenLoop is active
       await context._triggerClose();
       await flushPromises();
 
-      // Client should be released and status cleared
-      expect(mockClient.release).toHaveBeenCalled();
+      expect(mockClient.end).toHaveBeenCalled();
       expect(context.status).toHaveBeenCalledWith({});
     });
   });
