@@ -30,6 +30,14 @@ export interface PostgresDBNodeConfig {
   throwErrorsFieldType: string;
 }
 
+export interface PostgresNodeConfig {
+  name: string;
+  topic: string;
+  query: string;
+  PostgresDBNode: string;
+  throwErrors: string;
+}
+
 export interface PoolConfig {
   user: string;
   password: string;
