@@ -2,8 +2,10 @@
   "name": "@topcs/node-red-contrib-postgres",
   "version": "1.0.2",
   "scripts": {
-    "ci-publish": "ci-publish",
-    "test": "eslint postgrestor.js"
+    "build": "tsc && cp src/nodes/*.html dist/",
+    "test": "jest --coverage",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run build"
   },
   "description": "Yet another Node-RED node to query PostgreSQL with query parameters and listening",
   "author": {
@@ -30,12 +32,18 @@
   "node-red": {
     "version": ">=3.0.0",
     "nodes": {
-      "postgres": "postgrestor.js"
+      "postgres": "dist/postgrestor.js"
     }
   },
   "devDependencies": {
-    "ci-publish": "^1.1.0",
-    "eslint": "^6.8.0",
-    "eslint-config-google": "^0.14.0"
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "@types/mustache": "^4.2.0",
+    "node-red-node-test-helper": "^0.3.0"
   }
 }
