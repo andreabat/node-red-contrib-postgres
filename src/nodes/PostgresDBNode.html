@@ -387,3 +387,34 @@
 
   });
 </script>
+<script type="text/x-red" data-help-name="PostgresDBNode">
+    <h3>PostgresDBNode — PostgreSQL Configuration</h3>
+    <p>A <b>configuration node</b> that manages a connection pool to a PostgreSQL database. Other nodes (PostgresNode, PostgresListenerNode) reference this config to share connections.</p>
+    <h4>Connection</h4>
+    <dl>
+      <dt><b>Name</b></dt><dd>Label for this config node. Defaults to <code>user@host:port/database</code>.</dd>
+      <dt><b>Database Source</b></dt><dd><b>Manual</b>: enter host/port/database individually. <b>DATABASE_URL</b>: use a PostgreSQL connection string like <code>postgresql://user:pass@host:5432/db</code>.</dd>
+      <dt><b>Host</b></dt><dd>PostgreSQL server hostname or IP address.</dd>
+      <dt><b>Port</b></dt><dd>PostgreSQL server port (default: 5432).</dd>
+      <dt><b>Database</b></dt><dd>Database name to connect to.</dd>
+      <dt><b>SSL Mode</b></dt><dd>TLS/SSL mode for encrypted connections: <b>disable</b> (no encryption), <b>require</b> (SSL required, cert not verified), <b>verify-ca</b> (verify server cert against CA), <b>verify-full</b> (verify cert AND hostname).</dd>
+    </dl>
+    <h4>Security</h4>
+    <dl>
+      <dt><b>User</b></dt><dd>Database username.</dd>
+      <dt><b>Password</b></dt><dd>Database password (stored as a Node-RED credential).</dd>
+      <dt><b>SSL CA Certificate</b></dt><dd>PEM content of the Certificate Authority cert (required for verify-ca/verify-full).</dd>
+      <dt><b>SSL Client Certificate</b></dt><dd>PEM content of the client certificate for mutual TLS.</dd>
+      <dt><b>SSL Client Key</b></dt><dd>PEM content of the client private key (stored as a Node-RED credential).</dd>
+    </dl>
+    <h4>Pool</h4>
+    <dl>
+      <dt><b>Maximum size</b></dt><dd>Max connections in the pool (default: 10).</dd>
+      <dt><b>Minimum size</b></dt><dd>Min idle connections kept open (default: 1).</dd>
+      <dt><b>Idle Timeout</b></dt><dd>Milliseconds before an idle connection is closed (default: 10000).</dd>
+      <dt><b>Connection Timeout</b></dt><dd>Milliseconds to wait for a new connection before failing (default: 10000).</dd>
+      <dt><b>Statement Timeout</b></dt><dd>Default query timeout in ms for all nodes using this config. 0 = no timeout.</dd>
+    </dl>
+    <h4>Status Badge</h4>
+    <p>The node badge shows pool health: <code>Active: X / Idle: Y / Waiting: Z / Total: T</code>. Updated every 30 seconds.</p>
+</script>

@@ -63,3 +63,30 @@
     }
   });
 </script>
+<script type="text/x-red" data-help-name="PostgresListenerNode">
+    <h3>PostgresListenerNode — PostgreSQL LISTEN/NOTIFY</h3>
+    <p>Listens for real-time <code>NOTIFY</code> events from PostgreSQL on a specified channel. Auto-reconnects on connection drop — never manual restart needed.</p>
+    <h4>Configuration</h4>
+    <dl>
+      <dt><b>Name</b></dt><dd>Label for this node in the flow.</dd>
+      <dt><b>Server</b></dt><dd>Select a PostgresDBNode that defines the database connection.</dd>
+      <dt><b>Channel</b></dt><dd>PostgreSQL channel to listen on. Sanitized via <code>pg-format %I</code> to prevent SQL injection. Example: <code>my_events</code>.</dd>
+      <dt><b>Auto-parse JSON NOTIFY payloads</b></dt><dd>ON (default): NOTIFY payloads auto-parsed as JSON. Invalid JSON falls back to raw string. OFF: payloads always raw strings. Original always preserved in <code>msg._original</code>.</dd>
+    </dl>
+    <h4>Output Message</h4>
+    <p>Each <code>NOTIFY</code> event produces:</p>
+    <ul>
+      <li><code>msg.channel</code> — the channel name</li>
+      <li><code>msg.payload</code> — parsed object or raw string</li>
+      <li><code>msg._original</code> — original raw payload for debugging</li>
+    </ul>
+    <h4>Status Badge</h4>
+    <ul>
+      <li>🟢 <b>listening on {channel}</b> — connected</li>
+      <li>🟡 <b>reconnecting (attempt N)</b> — connection lost, retrying</li>
+      <li>🔴 <b>disconnected</b> — node closed</li>
+    </ul>
+    <h4>Reconnection</h4>
+    <p>On connection drop, retries with: <code>min(30000, 500 × 2^attempt) × random</code>. Never gives up — only explicit close stops it.</p>
+    <p>Send a notification from SQL: <code>NOTIFY my_events, '{"key":"value"}'</code></p>
+</script>

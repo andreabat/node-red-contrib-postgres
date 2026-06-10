@@ -253,3 +253,37 @@
     }
   });
 </script>
+<script type="text/x-red" data-help-name="PostgresNode">
+    <h3>PostgresNode — PostgreSQL Query</h3>
+    <p>Executes SQL queries against a PostgreSQL database using parameterized templates. Supports Mustache templating, named parameters, transactions, cursor streaming, COPY import/export, and automatic retry on transient errors.</p>
+    <h4>Connection</h4>
+    <dl>
+      <dt><b>Name</b></dt><dd>Label for this node in the flow.</dd>
+      <dt><b>Server</b></dt><dd>Select a PostgresDBNode that defines the database connection.</dd>
+    </dl>
+    <h4>Execution Modes</h4>
+    <dl>
+      <dt><b>Throw Exception</b></dt><dd>ON: SQL errors halt the flow. OFF: errors attached to <code>msg.error</code> and message continues downstream.</dd>
+      <dt><b>Named Parameters</b></dt><dd>When ON, <code>msg.params</code> is a key-value object (<code>{id: 42, name: "Alice"}</code>) bound to <code>$1, $2</code> in insertion order. Mustache renders first, then params bind.</dd>
+      <dt><b>Transaction Mode</b></dt><dd>When ON, <code>msg.payload</code> must be an array of <code>{query, params, output}</code> objects. All execute atomically within <code>BEGIN/COMMIT</code>. On failure: auto-<code>ROLLBACK</code>. First <code>output: true</code> determines <code>msg.payload.rows</code>.</dd>
+      <dt><b>Cursor Mode</b></dt><dd>Streams large <code>SELECT</code> results in batches via PostgreSQL <code>DECLARE/FETCH</code>. Each batch emits a separate message: <code>{payload: [...rows], batch: {index, rows, total}}</code>. Final message: <code>{payload: [], complete: true, total: N}</code>. Non-SELECT queries ignored.</dd>
+      <dt><b>COPY Mode</b></dt><dd>High-performance CSV import/export via PostgreSQL COPY protocol. <code>COPY FROM STDIN</code> sends <code>msg.payload</code> as CSV. <code>COPY TO STDOUT</code> returns CSV as string.</dd>
+      <dt><b>Retry on Transient Errors</b></dt><dd>Auto-retries on deadlock (40P01), serialization failure (40001), connection resets. Uses jittered exponential backoff. Does NOT apply to Cursor or COPY mode.</dd>
+    </dl>
+    <h4>Limits</h4>
+    <dl>
+      <dt><b>Query Timeout (ms)</b></dt><dd>Per-query timeout. 0 = no timeout. Overrides the pool's statement_timeout. Reset in finally block.</dd>
+      <dt><b>Cursor Batch Size</b></dt><dd>Rows per <code>FETCH</code> in Cursor Mode (default: 100).</dd>
+      <dt><b>Max Retries</b></dt><dd>Max retry attempts before propagating error (default: 3).</dd>
+      <dt><b>Retry Base Delay (ms)</b></dt><dd>Base delay for backoff: <code>min(5000, base × 2^attempt) × random</code> (default: 100).</dd>
+    </dl>
+    <h4>Type Mapping</h4>
+    <dl>
+      <dt><b>Map numeric → number</b></dt><dd>Convert <code>NUMERIC</code> to JS number. Warning: precision loss for large values.</dd>
+      <dt><b>Map timestamptz → ISO 8601</b></dt><dd>Convert <code>TIMESTAMPTZ</code> to ISO string. OFF: returns Date objects.</dd>
+      <dt><b>Parse jsonb → object</b></dt><dd>Auto-parse <code>JSONB</code> columns. OFF: returns raw JSON strings.</dd>
+    </dl>
+    <h4>Query Editor</h4>
+    <p>Write SQL with Mustache templates: <code>SELECT * FROM {{msg.table}}</code>. Renders with current <code>msg</code> as context. Prepared statements auto-managed via MD5-hashed names.</p>
+    <p>Pass parameters via <code>msg.params</code> array for positional binding, or as object with Named Parameters ON.</p>
+</script>
