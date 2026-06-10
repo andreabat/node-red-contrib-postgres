@@ -382,4 +382,49 @@ describe('PostgresListenerNode', () => {
       expect(context.send).not.toHaveBeenCalled();
     });
   });
+
+  describe('badge states and edge cases', () => {
+    it('should show green badge after successful LISTEN', async () => {
+      const config = buildConfig();
+      const context = buildContext();
+      PostgresListenerNode.bind(context, config)();
+
+      await flushPromises();
+
+      expect(context.status).toHaveBeenLastCalledWith(
+        expect.objectContaining({ fill: 'green', text: 'listening on test_channel' })
+      );
+    });
+
+    it('should use safeChannel in UNLISTEN on close', async () => {
+      const config = buildConfig({ channel: 'special_ch' });
+      const context = buildContext();
+      PostgresListenerNode.bind(context, config)();
+
+      await flushPromises();
+
+      mockClient.query.mockClear();
+      mockClient.query.mockResolvedValue({});
+
+      await context._triggerClose();
+
+      expect(mockClient.query).toHaveBeenCalledWith('UNLISTEN "special_ch"');
+    });
+
+    it('should handle close during active LISTEN gracefully', async () => {
+      const config = buildConfig();
+      const context = buildContext();
+      PostgresListenerNode.bind(context, config)();
+
+      await flushPromises();
+
+      // Trigger close while listenLoop is active
+      await context._triggerClose();
+      await flushPromises();
+
+      // Client should be released and status cleared
+      expect(mockClient.release).toHaveBeenCalled();
+      expect(context.status).toHaveBeenCalledWith({});
+    });
+  });
 });
