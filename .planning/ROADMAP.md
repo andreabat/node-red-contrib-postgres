@@ -23,7 +23,12 @@ Reviving a functional but unmaintained Node-RED PostgreSQL contrib node into a p
   3. `npm run lint` passes with ESLint 9.x flat config and typescript-eslint 8.x — zero errors, zero warnings
   4. All existing functionality (pooled queries, Mustache templating, LISTEN/NOTIFY, typed inputs, i18n) works identically to pre-migration — no behavioral regressions
   5. Repository is clean: no dead `azure-pipelines.yml`, no `myPool` module-level variable, all `console.log` calls replaced with Node-RED logging, dead `output` checkbox resolved, commented-out HTML code removed, locale placeholder swap fixed
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
+
+Plans:
+- [ ] 01-01-PLAN.md — TypeScript tooling scaffold, ESLint 9.x flat config, Jest setup, shared types, getField utility with tests, PostgresDBNode migration with HTML template, barrel entry, BUG-05/BUG-06 fixes, remove azure-pipelines.yml
+- [ ] 01-02-PLAN.md — PostgresNode query node migration with HTML template, BUG-01/BUG-03/BUG-04/BUG-05 fixes, PostgresNode tests (success, error paths, client release), barrel entry expansion
+- [ ] 01-03-PLAN.md — PostgresListenerNode migration with HTML template, BUG-02 fix (close handler with UNLISTEN+release), listener tests, barrel entry completion, remove original JS/HTML/eslintrc files
 
 ### Phase 2: Production Database Core
 **Goal**: Developers can configure production-grade PostgreSQL connections and execute queries with named parameters, structured errors, per-node timeouts, type mapping, prepared statements, and a syntax-highlighted SQL editor — all backed by observable pool health.
@@ -56,6 +61,6 @@ Reviving a functional but unmaintained Node-RED PostgreSQL contrib node into a p
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Modernization | 0/TBD | Not started | - |
+| 1. Foundation & Modernization | 0/3 | Planned | - |
 | 2. Production Database Core | 0/TBD | Not started | - |
 | 3. Transactions, Real-time & Streaming | 0/TBD | Not started | - |
