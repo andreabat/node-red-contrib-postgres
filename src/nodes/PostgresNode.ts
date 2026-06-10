@@ -1,8 +1,20 @@
 import mustache from 'mustache';
+import * as crypto from 'crypto';
 import { getREDNodes } from '../lib/red';
 import type { PostgresNodeConfig } from '../lib/types';
 import { bindNamedParams } from '../lib/params';
 import { formatError } from '../lib/errorFormatter';
+import { buildQueryTypes } from '../lib/typeMapping';
+
+/**
+ * Generates a unique prepared statement name from query text.
+ * Uses MD5 truncated to 8 hex chars with 'ps_' prefix (max 11 chars).
+ * PostgreSQL identifier limit is 63 bytes, so this is well within bounds.
+ * Per D-04: auto-generated from query hash — no user-facing UI for naming.
+ */
+function hashQuery(text: string): string {
+  return 'ps_' + crypto.createHash('md5').update(text).digest('hex').substring(0, 8);
+}
 
 export function PostgresNode(this: any, config: PostgresNodeConfig) {
   const RED = getREDNodes();
@@ -38,14 +50,27 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
           }
         }
 
-        msg.payload = await client.query(query, resolvedParams);
+        // Step C: Prepared statement name and type mapping config (REL-02, REL-03)
+        const stmtName = hashQuery(query);
+        const disableAll = !(config.mapNumeric === true || config.mapNumeric === 'true') &&
+                           !(config.mapTimestamptz === true || config.mapTimestamptz === 'true') &&
+                           (config.parseJsonb === false || config.parseJsonb === 'false');
+        const disableJsonb = config.parseJsonb === false || config.parseJsonb === 'false';
+        const queryTypes = buildQueryTypes({ disableAll, disableJsonb });
+
+        msg.payload = await client.query({
+          name: stmtName,
+          text: query,
+          values: resolvedParams,
+          types: queryTypes,
+        });
         node.status({
           fill: 'green',
           shape: 'ring',
           text: `Query ok. ${msg.payload.rowCount} rows returned`
         });
       } catch (err: any) {
-        // Step C: Structured error handling (QUERY-02)
+        // Step D: Structured error handling (QUERY-02)
         const structuredError = formatError(err);
 
         // Detect query timeout (code 57014) and format message with timeout value
@@ -69,7 +94,7 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
       } finally {
         if (client) {
           try {
-            // Step D: Reset statement_timeout before release (QUERY-03)
+            // Step E: Reset statement_timeout before release (QUERY-03)
             // This MUST happen before client.release() to prevent timeout leakage
             if (timeoutMs > 0) {
               try {
