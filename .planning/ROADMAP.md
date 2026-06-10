@@ -38,7 +38,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — PostgresListenerNode migration with HTML template, BUG-02 fix (close handler with UNLISTEN+release), listener tests, barrel entry completion, remove original JS/HTML/eslintrc files
+- [x] 01-03-PLAN.md — PostgresListenerNode migration with HTML template, BUG-02 fix (close handler with UNLISTEN+release), listener tests, barrel entry completion, remove original JS/HTML/eslintrc files
 
 ### Phase 2: Production Database Core
 
