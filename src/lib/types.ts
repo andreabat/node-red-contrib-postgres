@@ -51,6 +51,13 @@ export interface PostgresNodeConfig {
   mapNumeric: string | boolean;
   mapTimestamptz: string | boolean;
   parseJsonb: string | boolean;
+  transactionMode: string | boolean;
+}
+
+export interface TransactionQuery {
+  query: string;
+  params?: Record<string, any>;
+  output?: boolean;
 }
 
 export interface PostgresListenerNodeConfig {

@@ -86,6 +86,7 @@ describe('PostgresNode', () => {
       mapNumeric: false,
       mapTimestamptz: false,
       parseJsonb: false,
+      transactionMode: false,
       ...overrides
     };
   }
@@ -974,6 +975,295 @@ describe('PostgresNode', () => {
       // it would appear in the mock registration
       const { registerTypeParsers } = require('../../lib/typeMapping');
       expect(registerTypeParsers).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('transaction mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+      mockMustacheRender.mockReturnValue('SELECT 1');
+      mockBindNamedParams.mockReturnValue([]);
+      mockFormatError.mockReturnValue({ message: 'mock error' });
+      mockBuildQueryTypes.mockReturnValue(undefined);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    function findStringCall(text: string) {
+      return mockClient.query.mock.calls.find(
+        (call: any[]) => call[0] === text
+      );
+    }
+
+    // Test 1: Happy path — BEGIN + query + COMMIT, first output:true rows in msg.payload
+    it('should execute BEGIN, queries, COMMIT on transaction with output:true', async () => {
+      const insertResult = { command: 'INSERT', rowCount: 1, rows: [{ id: 1 }] };
+      mockClient.query
+        .mockResolvedValueOnce({}) // SET timeout (won't happen, timeoutMs=0)
+        .mockResolvedValueOnce(insertResult) // main query (non-transaction path)
+        .mockResolvedValueOnce({}); // unused
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO t VALUES($1)', params: { id: 1 }, output: true }]
+      });
+
+      expect(findStringCall('BEGIN')).toBeDefined();
+      expect(findStringCall('COMMIT')).toBeDefined();
+      expect(mockClient.release).toHaveBeenCalled();
+      expect(context.status).toHaveBeenCalledWith(
+        expect.objectContaining({ fill: 'green' })
+      );
+    });
+
+    // Test 2: Error path — second query in array fails → ROLLBACK called, COMMIT NOT called
+    it('should ROLLBACK on transaction query failure and not COMMIT', async () => {
+      const pgErr = new Error('SQL error') as any;
+      pgErr.code = '23505';
+      pgErr.detail = 'duplicate key';
+      mockClient.query.mockRejectedValueOnce(pgErr); // fails
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [
+          { query: 'INSERT INTO t VALUES($1)', params: { id: 1 }, output: true },
+          { query: 'INSERT INTO t VALUES($1)', params: { id: 1 }, output: false }
+        ]
+      });
+
+      expect(findStringCall('ROLLBACK')).toBeDefined();
+      expect(findStringCall('COMMIT')).toBeUndefined();
+      expect(mockClient.release).toHaveBeenCalled();
+    });
+
+    // Test 3: Client release in finally — verify client.release() called on query failure
+    it('should release client in finally even when transaction query fails', async () => {
+      mockClient.query.mockRejectedValue(new Error('fail'));
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO t VALUES($1)', params: { id: 1 }, output: true }]
+      });
+
+      expect(mockClient.release).toHaveBeenCalledTimes(1);
+    });
+
+    // Test 4: First output:true wins — only first query's rows in msg.payload
+    it('should use first output:true query result for msg.payload', async () => {
+      const result1 = { command: 'SELECT', rowCount: 2, rows: [{ id: 1 }, { id: 2 }] };
+      const result2 = { command: 'SELECT', rowCount: 1, rows: [{ id: 3 }] };
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce(result1) // entry 1 (output:true)
+        .mockResolvedValueOnce(result2) // entry 2 (output:true, but first already captured)
+        .mockResolvedValueOnce({}); // COMMIT
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [
+          { query: 'SELECT * FROM a', output: true },
+          { query: 'SELECT * FROM b', output: true }
+        ]
+      });
+
+      expect(findStringCall('COMMIT')).toBeDefined();
+      // First output:true wins — only result1.rows in msg.payload
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.payload).toEqual([{ id: 1 }, { id: 2 }]);
+    });
+
+    // Test 5: No output:true → empty payload ([])
+    it('should set msg.payload to empty array when no entry has output:true', async () => {
+      mockClient.query
+        .mockResolvedValueOnce({}) // unused
+        .mockResolvedValueOnce({ command: 'INSERT', rowCount: 5, rows: [] });
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO t VALUES(1)' }]
+      });
+
+      // After implementation: msg.payload should be [] (empty array, no output:true)
+      expect(findStringCall('COMMIT')).toBeDefined();
+    });
+
+    // Test 6: Mustache + named params in transaction
+    it('should render Mustache and bind named params for each transaction entry', async () => {
+      mockMustacheRender.mockReturnValue('INSERT INTO t VALUES($1)');
+      mockBindNamedParams.mockReturnValue([42]);
+      mockClient.query
+        .mockResolvedValueOnce({}) // unused
+        .mockResolvedValueOnce({ command: 'INSERT', rowCount: 1, rows: [] });
+
+      const config = buildConfig({ transactionMode: true, useNamedParams: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO {{msg.table}} VALUES($1)', params: { id: 42 }, output: true }]
+      });
+
+      // After implementation: mustache.render called and bindNamedParams called for entry
+      expect(findStringCall('COMMIT')).toBeDefined();
+    });
+
+    // Test 7: ROLLBACK failure resilience — client.release() still called
+    it('should release client even when ROLLBACK itself fails', async () => {
+      const pgErr = new Error('query error') as any;
+      pgErr.code = '23505';
+      mockClient.query.mockRejectedValueOnce(pgErr);
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO t VALUES($1)', params: { id: 1 }, output: true }]
+      });
+
+      expect(mockClient.release).toHaveBeenCalledTimes(1);
+    });
+
+    // Test 8: Backward compat — transactionMode=false with msg.payload array
+    it('should NOT enter transaction path when transactionMode is false even with array payload', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 0, rows: [] });
+
+      const config = buildConfig({ transactionMode: false });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'INSERT INTO t VALUES(1)' }]
+      });
+
+      // BEGIN/COMMIT/ROLLBACK should NOT be called
+      expect(findStringCall('BEGIN')).toBeUndefined();
+      expect(findStringCall('COMMIT')).toBeUndefined();
+      expect(findStringCall('ROLLBACK')).toBeUndefined();
+      // Client should still be released (single query path)
+      expect(mockClient.release).toHaveBeenCalled();
+    });
+
+    // Test 9: transactionMode ON but msg.payload is NOT an array → backward compat
+    it('should fall through to single-query path when transactionMode is on but payload is not array', async () => {
+      mockClient.query.mockResolvedValue({ command: 'SELECT', rowCount: 1, rows: [{ id: 1 }] });
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({ payload: 'single string payload' });
+
+      expect(findStringCall('BEGIN')).toBeUndefined();
+      expect(findStringCall('COMMIT')).toBeUndefined();
+      expect(context.send).toHaveBeenCalledTimes(1);
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.payload).toBeDefined();
+      expect(outputMsg.payload.rowCount).toBe(1);
+    });
+
+    // Test 10: Empty transaction array → BEGIN+COMMIT, msg.payload = []
+    it('should handle empty transaction array with BEGIN+COMMIT and empty payload', async () => {
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({}); // COMMIT
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({ payload: [] });
+
+      expect(findStringCall('BEGIN')).toBeDefined();
+      expect(findStringCall('COMMIT')).toBeDefined();
+      expect(context.status).toHaveBeenCalledWith(
+        expect.objectContaining({ fill: 'green' })
+      );
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.payload).toEqual([]);
+      expect(mockClient.release).toHaveBeenCalled();
+    });
+
+    // Test 11: Transaction preserves msg.topic and msg._msgid
+    it('should preserve msg.topic and msg._msgid through transaction', async () => {
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ command: 'SELECT', rowCount: 1, rows: [{ id: 1 }] }) // entry
+        .mockResolvedValueOnce({}); // COMMIT
+
+      const config = buildConfig({ transactionMode: true });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        topic: 'my-custom-topic',
+        _msgid: 'abc-123',
+        payload: [{ query: 'SELECT 1', output: true }]
+      });
+
+      expect(findStringCall('COMMIT')).toBeDefined();
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.topic).toBe('my-custom-topic');
+      expect(outputMsg._msgid).toBe('abc-123');
+      expect(outputMsg.payload).toEqual([{ id: 1 }]);
+    });
+
+    // Test 12: Query timeout in transaction (code 57014) — ROLLBACK attempted, error set
+    it('should handle query timeout in transaction with ROLLBACK and structured error', async () => {
+      const timeoutErr = new Error('canceling statement due to statement timeout') as any;
+      timeoutErr.code = '57014';
+      mockClient.query
+        .mockResolvedValueOnce({}) // SET statement_timeout = 5000
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockRejectedValueOnce(timeoutErr); // first entry query times out
+      mockFormatError.mockReturnValue({ message: 'Query timeout after 5000ms', code: '57014' });
+
+      const config = buildConfig({ transactionMode: true, queryTimeout: '5000' });
+      const context = buildContext();
+      PostgresNode.bind(context, config)();
+      nodeInstance = context;
+
+      await runInputAndWait({
+        payload: [{ query: 'SELECT * FROM huge_table', output: true }]
+      });
+
+      // ROLLBACK should be attempted
+      expect(findStringCall('ROLLBACK')).toBeDefined();
+      // Client released
+      expect(mockClient.release).toHaveBeenCalled();
+      // msg.error has structured error
+      const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
+      expect(outputMsg.error).toBeDefined();
+      expect(outputMsg.payload).toBeUndefined();
     });
   });
 });
