@@ -1,5 +1,4 @@
 import { formatError } from '../errorFormatter';
-import type { StructuredError } from '../../lib/types';
 
 describe('formatError', () => {
   describe('PostgreSQL DatabaseError', () => {
@@ -17,7 +16,7 @@ describe('formatError', () => {
         dataType: undefined,
         hint: 'Check the table name',
         where: undefined,
-        routine: 'parse_relation',
+        routine: 'parse_relation'
       };
 
       const result = formatError(pgError);
@@ -46,7 +45,7 @@ describe('formatError', () => {
         detail: 'Key (id)=(1) already exists.',
         constraint: 'users_pkey',
         table: 'users',
-        schema: 'public',
+        schema: 'public'
       };
 
       const result = formatError(pgError);
@@ -65,7 +64,7 @@ describe('formatError', () => {
         constraint: undefined,
         table: undefined,
         schema: undefined,
-        severity: 'ERROR',
+        severity: 'ERROR'
       };
 
       const result = formatError(timeoutError);

@@ -36,8 +36,6 @@ import type { PostgresNodeConfig } from '../../lib/types';
 
 import { PostgresNode } from '../PostgresNode';
 import { setRED } from '../../lib/red';
-import { bindNamedParams } from '../../lib/params';
-import { formatError } from '../../lib/errorFormatter';
 
 describe('PostgresNode', () => {
   let redRuntime: any;
@@ -207,6 +205,7 @@ describe('PostgresNode', () => {
   describe('error + throwErrors=true', () => {
     it('should call node.error with msg to halt flow', async () => {
       mockClient.query.mockRejectedValue(new Error('SQL error'));
+      mockFormatError.mockReturnValue({ message: 'SQL error' });
 
       const config = buildConfig({ throwErrors: true });
       const context = buildContext();
@@ -218,7 +217,7 @@ describe('PostgresNode', () => {
       await runInputAndWait(inputMsg);
 
       expect(context.error).toHaveBeenCalledWith(
-        expect.stringContaining('SQL error'),
+        expect.objectContaining({ message: 'SQL error' }),
         inputMsg
       );
       // When throwErrors=true, msg is set to null and node.send(null) is called
@@ -241,6 +240,7 @@ describe('PostgresNode', () => {
 
     it('should set red status on error', async () => {
       mockClient.query.mockRejectedValue(new Error('boom'));
+      mockFormatError.mockReturnValue({ message: 'boom', code: 'ERR' });
 
       const config = buildConfig({ throwErrors: true });
       const context = buildContext();
@@ -263,6 +263,7 @@ describe('PostgresNode', () => {
   describe('error + throwErrors=false', () => {
     it('should attach error to msg.payload downstream', async () => {
       mockClient.query.mockRejectedValue(new Error('SQL error'));
+      mockFormatError.mockReturnValue({ message: 'SQL error' });
 
       const config = buildConfig();
       const context = buildContext();
@@ -274,7 +275,7 @@ describe('PostgresNode', () => {
 
       // node.error called without msg (logs only)
       expect(context.error).toHaveBeenCalledWith(
-        expect.stringContaining('SQL error')
+        expect.objectContaining({ message: 'SQL error' })
       );
       // node.error should not have a second argument (no msg arg = log only)
       const errorCalls = (context.error as jest.Mock).mock.calls;
@@ -284,7 +285,7 @@ describe('PostgresNode', () => {
       // node.send called with msg having error
       expect(context.send).toHaveBeenCalledTimes(1);
       const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
-      expect(outputMsg.error).toContain('SQL error');
+      expect(outputMsg.error.message).toContain('SQL error');
     });
 
     it('should release client even when query fails', async () => {
@@ -303,6 +304,7 @@ describe('PostgresNode', () => {
 
     it('should send original msg properties along with error', async () => {
       mockClient.query.mockRejectedValue(new Error('oops'));
+      mockFormatError.mockReturnValue({ message: 'oops' });
 
       const config = buildConfig();
       const context = buildContext();
@@ -315,7 +317,7 @@ describe('PostgresNode', () => {
       const outputMsg = (context.send as jest.Mock).mock.calls[0]![0];
       expect(outputMsg.topic).toBe('my-topic');
       expect(outputMsg._msgid).toBe('abc');
-      expect(outputMsg.error).toContain('oops');
+      expect(outputMsg.error).toEqual(expect.objectContaining({ message: 'oops' }));
     });
   });
 
@@ -437,7 +439,7 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({ params: { name: 'Alice', id: 42 } });
 
-      expect(bindNamedParams).toHaveBeenCalledWith(
+      expect(mockBindNamedParams).toHaveBeenCalledWith(
         'SELECT * WHERE id = $1 AND name = $2',
         { name: 'Alice', id: 42 }
       );
@@ -470,7 +472,7 @@ describe('PostgresNode', () => {
       await runInputAndWait({ params: [1, 2, 3] });
 
       expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [1, 2, 3]);
-      expect(bindNamedParams).not.toHaveBeenCalled();
+      expect(mockBindNamedParams).not.toHaveBeenCalled();
     });
 
     it('should pass msg.params array through unchanged when params is array', async () => {
@@ -485,7 +487,7 @@ describe('PostgresNode', () => {
       await runInputAndWait({ params: [10, 20] });
 
       expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [10, 20]);
-      expect(bindNamedParams).not.toHaveBeenCalled();
+      expect(mockBindNamedParams).not.toHaveBeenCalled();
     });
 
     it('should run Mustache rendering before named parameter binding', async () => {
@@ -500,7 +502,7 @@ describe('PostgresNode', () => {
 
       // Track the call order: Mustache should be called before bindNamedParams
       const callOrder: string[] = [];
-      mockMustacheRender.mockImplementation((template: string) => {
+      mockMustacheRender.mockImplementation(() => {
         callOrder.push('mustache');
         return 'SELECT * FROM users WHERE id = $1';
       });
@@ -532,7 +534,7 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({});
 
-      expect(formatError).toHaveBeenCalledWith(pgErr);
+      expect(mockFormatError).toHaveBeenCalledWith(pgErr);
     });
 
     it('should set msg.error with structured error fields when throwErrors=false', async () => {
@@ -639,7 +641,7 @@ describe('PostgresNode', () => {
 
       await runInputAndWait({});
 
-      expect(formatError).toHaveBeenCalledWith(timeoutErr);
+      expect(mockFormatError).toHaveBeenCalledWith(timeoutErr);
     });
   });
 

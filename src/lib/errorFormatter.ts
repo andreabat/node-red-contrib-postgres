@@ -30,7 +30,7 @@ export function formatError(err: unknown): StructuredError {
       dataType: dbErr.dataType || undefined,
       hint: dbErr.hint || undefined,
       where: dbErr.where || undefined,
-      routine: dbErr.routine || undefined,
+      routine: dbErr.routine || undefined
     };
 
     return result;
