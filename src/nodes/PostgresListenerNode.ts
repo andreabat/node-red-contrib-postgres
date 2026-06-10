@@ -1,4 +1,5 @@
 import * as pg from 'pg';
+import format from 'pg-format';
 import { getREDNodes } from '../lib/red';
 import type { PostgresListenerNodeConfig } from '../lib/types';
 
@@ -15,47 +16,72 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
       text: 'Channel is required'
     });
     return;
-  } else {
-    node.status({
-      fill: 'green',
-      shape: 'ring',
-      text: `Listening on channel ${config.channel}`
-    });
   }
 
-  // BUG-02 fix: listenerClient declared at function scope (NOT inside .then())
-  // so the close handler can access and release it.
+  const safeChannel = format('%I', config.channel);
   let listenerClient: pg.PoolClient | null = null;
+  let closed = false;
 
-  node.config.pgPool.connect().then((client: pg.PoolClient) => {
-    listenerClient = client;
+  const parseNotifyJson = config.parseNotifyJson === undefined || config.parseNotifyJson === true || config.parseNotifyJson === 'true';
 
-    client.on('notification', async (msg: pg.Notification) => {
-      const { channel, payload } = msg;
+  async function listenLoop(): Promise<void> {
+    let attempt = 0;
+
+    while (!closed) {
       try {
-        node.log(`Notification received on channel ${channel}`);
-        const outMsg = { channel, payload };
-        node.send(outMsg);
-      } catch (notificationError: any) {
-        node.error(`Error handling notification: ${notificationError.message}`);
+        listenerClient = await node.config.pgPool.connect();
+
+        await listenerClient!.query(`LISTEN ${safeChannel}`);
+        attempt = 0;
+
+        node.status({
+          fill: 'green', shape: 'ring',
+          text: `listening on ${config.channel}`
+        });
+
+        listenerClient!.on('notification', (msg: pg.Notification) => {
+          let payload: any = msg.payload;
+          if (parseNotifyJson) {
+            try { payload = JSON.parse(msg.payload || ''); } catch { /* fall through to raw string */ }
+          }
+          node.send({ channel: msg.channel, payload, _original: msg.payload });
+        });
+
+        await new Promise<void>((_, reject) => {
+          listenerClient!.on('error', reject);
+          listenerClient!.on('end', reject);
+        });
+      } catch (err: any) {
+        if (closed) break;
+
+        const delay = Math.min(30000, 500 * Math.pow(2, attempt)) * Math.random();
+        attempt++;
+
+        node.status({
+          fill: 'yellow', shape: 'ring',
+          text: `reconnecting (attempt ${attempt})`
+        });
+
+        if (listenerClient) {
+          try { listenerClient.release(); } catch { /* release best-effort */ }
+          listenerClient = null;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    });
+    }
 
-    client.query(`LISTEN ${config.channel}`).then(() => {
-      node.log(`Listening on channel ${config.channel}`);
-    }).catch((err: any) => {
-      node.error(`Error setting up LISTEN: ${err.message}`);
-    });
+    node.status({ fill: 'red', shape: 'ring', text: 'disconnected' });
+  }
 
-  }).catch((connectionError: any) => {
-    node.error(`Error connecting to database: ${connectionError.message}`);
+  listenLoop().catch((err: any) => {
+    node.error(`Listener loop fatal error: ${err.message}`);
   });
 
-  // BUG-02 fix: close handler releases the listener client
   node.on('close', async () => {
+    closed = true;
     if (listenerClient) {
       try {
-        await listenerClient.query(`UNLISTEN ${config.channel}`);
+        await listenerClient.query(`UNLISTEN ${safeChannel}`);
       } catch (e: any) {
         node.warn(`Error during UNLISTEN: ${e.message}`);
       }
