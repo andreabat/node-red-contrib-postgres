@@ -27,9 +27,9 @@
         </label>
         <div style="display: inline-block; vertical-align: top;">
           <input type="radio" id="postgrestor-dbsource-manual" name="databaseSource" value="manual" checked>
-          <label for="postgrestor-dbsource-manual" data-i18n="postgres.databaseSource.manual" style="width: auto; display: inline;"></label>
+          <label for="postgrestor-dbsource-manual" data-i18n="postgres.databaseSource.manual" style="width: auto; display: inline;">Manual</label>
           <input type="radio" id="postgrestor-dbsource-url" name="databaseSource" value="url" style="margin-left: 12px;">
-          <label for="postgrestor-dbsource-url" data-i18n="postgres.databaseSource.url" style="width: auto; display: inline;"></label>
+          <label for="postgrestor-dbsource-url" data-i18n="postgres.databaseSource.url" style="width: auto; display: inline;">DATABASE_URL</label>
         </div>
       </div>
       <div id="postgrestor-manual-fields">
@@ -72,10 +72,10 @@
           <span data-i18n="postgres.label.sslmode"></span>
         </label>
         <select id="node-config-input-sslmode" style="width: auto; min-width: 130px;">
-          <option value="disable" data-i18n="postgres.sslmode.disable"></option>
-          <option value="require" data-i18n="postgres.sslmode.require"></option>
-          <option value="verify-ca" data-i18n="postgres.sslmode.verify-ca"></option>
-          <option value="verify-full" data-i18n="postgres.sslmode.verify-full"></option>
+          <option value="disable" data-i18n="postgres.sslmode.disable">disable</option>
+          <option value="require" data-i18n="postgres.sslmode.require">require</option>
+          <option value="verify-ca" data-i18n="postgres.sslmode.verify-ca">verify-ca</option>
+          <option value="verify-full" data-i18n="postgres.sslmode.verify-full">verify-full</option>
         </select>
         <input type="hidden" id="node-config-input-sslmodeFieldType">
       </div>
