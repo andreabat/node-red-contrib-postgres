@@ -30,7 +30,7 @@ Reviving a functional but unmaintained Node-RED PostgreSQL contrib node into a p
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — TypeScript tooling scaffold, ESLint 9.x flat config, Jest setup, shared types, getField utility with tests, PostgresDBNode migration with HTML template, barrel entry, BUG-05/BUG-06 fixes, remove azure-pipelines.yml
+- [x] 01-01-PLAN.md — TypeScript tooling scaffold, ESLint 9.x flat config, Jest setup, shared types, getField utility with tests, PostgresDBNode migration with HTML template, barrel entry, BUG-05/BUG-06 fixes, remove azure-pipelines.yml
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -77,6 +77,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Modernization | 0/3 | Planned | - |
+| 1. Foundation & Modernization | 1/3 | In Progress|  |
 | 2. Production Database Core | 0/TBD | Not started | - |
 | 3. Transactions, Real-time & Streaming | 0/TBD | Not started | - |

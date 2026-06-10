@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Core Modernization
 
-- [ ] **TSC-01**: Codebase migrated from JavaScript to TypeScript, compiled via `tsc` with ES2022 target and CommonJS modules
-- [ ] **TSC-02**: ESLint upgraded to 9.x flat config with typescript-eslint 8.x
-- [ ] **TSC-03**: Jest test framework installed with ts-jest, meaningful test coverage for all node types and library modules
-- [ ] **TSC-04**: Dead `azure-pipelines.yml` removed from repository
+- [x] **TSC-01**: Codebase migrated from JavaScript to TypeScript, compiled via `tsc` with ES2022 target and CommonJS modules
+- [x] **TSC-02**: ESLint upgraded to 9.x flat config with typescript-eslint 8.x
+- [x] **TSC-03**: Jest test framework installed with ts-jest, meaningful test coverage for all node types and library modules
+- [x] **TSC-04**: Dead `azure-pipelines.yml` removed from repository
 
 ### Bug Fixes & Cleanup
 
@@ -20,8 +20,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **BUG-02**: Listener connection leak fixed — close handler releases persistent client on node removal/redeploy
 - [ ] **BUG-03**: All `console.log` calls replaced with `node.log()` / `node.warn()` for Node-RED log integration
 - [ ] **BUG-04**: Dead `output` config checkbox either wired to conditionally call `node.send(msg)` or removed from HTML template
-- [ ] **BUG-05**: Commented-out code blocks cleaned from `postgrestor.html` templates and defaults
-- [ ] **BUG-06**: Locale placeholder swap (min/max) fixed in `locales/en-US/postgrestor.json`
+- [x] **BUG-05**: Commented-out code blocks cleaned from `postgrestor.html` templates and defaults
+- [x] **BUG-06**: Locale placeholder swap (min/max) fixed in `locales/en-US/postgrestor.json`
 
 ### Connection & Pooling
 
@@ -83,16 +83,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TSC-01 | Phase 1 | Pending |
-| TSC-02 | Phase 1 | Pending |
-| TSC-03 | Phase 1 | Pending |
-| TSC-04 | Phase 1 | Pending |
+| TSC-01 | Phase 1 | Complete |
+| TSC-02 | Phase 1 | Complete |
+| TSC-03 | Phase 1 | Complete |
+| TSC-04 | Phase 1 | Complete |
 | BUG-01 | Phase 1 | Pending |
 | BUG-02 | Phase 1 | Pending |
 | BUG-03 | Phase 1 | Pending |
 | BUG-04 | Phase 1 | Pending |
-| BUG-05 | Phase 1 | Pending |
-| BUG-06 | Phase 1 | Pending |
+| BUG-05 | Phase 1 | Complete |
+| BUG-06 | Phase 1 | Complete |
 | POOL-01 | Phase 2 | Pending |
 | POOL-02 | Phase 2 | Pending |
 | POOL-03 | Phase 2 | Pending |
@@ -113,6 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-01 | Phase 3 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 28 total
 - Mapped to phases: 28
 - Unmapped: 0 ✓
