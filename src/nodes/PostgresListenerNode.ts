@@ -43,6 +43,7 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
         // Client. Access _client directly to guarantee delivery.
         const eventSource = (listenerClient as any)._client || listenerClient;
         eventSource.on('notification', (msg: pg.Notification) => {
+          node.log(`NOTIFY received on channel '${msg.channel}': ${msg.payload}`);
           let payload: any = msg.payload;
           if (parseNotifyJson) {
             try { payload = JSON.parse(msg.payload || ''); } catch { /* fall through to raw string */ }
