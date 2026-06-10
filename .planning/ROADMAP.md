@@ -34,7 +34,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — PostgresNode query node migration with HTML template, BUG-01/BUG-03/BUG-04 fixes, PostgresNode tests (success, error paths, client release), barrel entry expansion
+- [x] 01-02-PLAN.md — PostgresNode query node migration with HTML template, BUG-01/BUG-03/BUG-04 fixes, PostgresNode tests (success, error paths, client release), barrel entry expansion
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

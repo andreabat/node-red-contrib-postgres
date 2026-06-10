@@ -16,10 +16,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Bug Fixes & Cleanup
 
-- [ ] **BUG-01**: Dead `myPool` module-level variable removed from `postgrestor.js`
+- [x] **BUG-01**: Dead `myPool` module-level variable removed from `postgrestor.js`
 - [ ] **BUG-02**: Listener connection leak fixed — close handler releases persistent client on node removal/redeploy
-- [ ] **BUG-03**: All `console.log` calls replaced with `node.log()` / `node.warn()` for Node-RED log integration
-- [ ] **BUG-04**: Dead `output` config checkbox either wired to conditionally call `node.send(msg)` or removed from HTML template
+- [x] **BUG-03**: All `console.log` calls replaced with `node.log()` / `node.warn()` for Node-RED log integration
+- [x] **BUG-04**: Dead `output` config checkbox either wired to conditionally call `node.send(msg)` or removed from HTML template
 - [x] **BUG-05**: Commented-out code blocks cleaned from `postgrestor.html` templates and defaults
 - [x] **BUG-06**: Locale placeholder swap (min/max) fixed in `locales/en-US/postgrestor.json`
 
@@ -87,10 +87,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TSC-02 | Phase 1 | Complete |
 | TSC-03 | Phase 1 | Complete |
 | TSC-04 | Phase 1 | Complete |
-| BUG-01 | Phase 1 | Pending |
+| BUG-01 | Phase 1 | Complete |
 | BUG-02 | Phase 1 | Pending |
-| BUG-03 | Phase 1 | Pending |
-| BUG-04 | Phase 1 | Pending |
+| BUG-03 | Phase 1 | Complete |
+| BUG-04 | Phase 1 | Complete |
 | BUG-05 | Phase 1 | Complete |
 | BUG-06 | Phase 1 | Complete |
 | POOL-01 | Phase 2 | Pending |
