@@ -62,7 +62,7 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
           name: stmtName,
           text: query,
           values: resolvedParams,
-          types: queryTypes,
+          types: queryTypes
         });
         node.status({
           fill: 'green',

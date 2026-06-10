@@ -47,7 +47,7 @@ export function buildQueryTypes(options: {
 }): any {
   if (options.disableAll) {
     return {
-      getTypeParser: (_oid: number, _format: string) => (val: string) => val,
+      getTypeParser: () => (val: string) => val
     };
   }
 
@@ -56,7 +56,7 @@ export function buildQueryTypes(options: {
       getTypeParser: (oid: number, format: string) =>
         oid === 3807
           ? (val: string) => val
-          : pg.types.getTypeParser(oid, format as any),
+          : pg.types.getTypeParser(oid, format as any)
     };
   }
 
