@@ -14,7 +14,20 @@
       "connectionTimeout": "Connection Timeout",
       "server": "Server",
       "query": "Query",
-      "receiveOuput": "Receive output"
+      "receiveOuput": "Receive output",
+      "databaseSource": "Database Source",
+      "databaseUrl": "DATABASE_URL",
+      "sslmode": "SSL Mode",
+      "sslCa": "SSL CA Certificate",
+      "sslCert": "SSL Client Certificate",
+      "sslKey": "SSL Client Key",
+      "sslDeprecated": "SSL (deprecated)",
+      "statementTimeout": "Statement Timeout (ms)",
+      "namedParams": "Named Parameters",
+      "queryTimeout": "Query Timeout (ms)",
+      "mapNumeric": "Map numeric → number",
+      "mapTimestamptz": "Map timestamptz → ISO 8601",
+      "parseJsonb": "Parse jsonb → object"
     },
     "placeholder": {
       "name": "dbConnection",
@@ -26,7 +39,13 @@
       "min": "1",
       "max": "10",
       "idle": "1000 (Milliseconds)",
-      "connectionTimeout": "10000 (Milliseconds)"
+      "connectionTimeout": "10000 (Milliseconds)",
+      "databaseUrl": "postgresql://user:pass@host:5432/db",
+      "sslCa": "Paste CA certificate PEM content here",
+      "sslCert": "Paste client certificate PEM content here",
+      "sslKey": "Paste client key PEM content here",
+      "statementTimeout": "30000",
+      "queryTimeout": "0"
     },
     "tab": {
       "connection": "Connection",
@@ -35,7 +54,29 @@
     },
     "title": {
       "max": "Maximum number of physical database connections that this connection pool can contain.",
-      "min": "Minimum number of physical database connections that this connection pool can contain."
+      "min": "Minimum number of physical database connections that this connection pool can contain.",
+      "sslmode": "PostgreSQL SSL/TLS mode. 'verify-ca' and 'verify-full' require certificates in the Security tab.",
+      "sslDeprecated": "Migrated to sslmode: require. Use the SSL Mode dropdown below.",
+      "databaseUrl": "PostgreSQL connection string. Overrides host/port/database when set.",
+      "statementTimeout": "Default query timeout in milliseconds. 0 = no timeout. Can be overridden per-node.",
+      "namedParams": "Enable named parameters via msg.params. Keys mapped to positional $1, $2, ... in query order. Mustache templating renders first, then named params bind.",
+      "queryTimeout": "Per-node query timeout in milliseconds. 0 = no timeout. Overrides the pool statement_timeout for this node.",
+      "mapNumeric": "Convert PostgreSQL numeric type to JavaScript number. Warning: loss of precision for very large values.",
+      "mapTimestamptz": "Convert PostgreSQL timestamptz to ISO 8601 date string. Off: returns Date object.",
+      "parseJsonb": "Auto-parse PostgreSQL jsonb columns to JavaScript objects. Off: returns raw jsonb string."
+    },
+    "databaseSource": {
+      "manual": "Manual",
+      "url": "DATABASE_URL"
+    },
+    "sslmode": {
+      "disable": "disable",
+      "require": "require",
+      "verify-ca": "verify-ca",
+      "verify-full": "verify-full"
+    },
+    "section": {
+      "typeMapping": "Type Mapping"
     }
   }
 }

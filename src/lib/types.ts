@@ -4,6 +4,8 @@
 
 export type FieldType = 'flow' | 'global' | 'num' | 'bool' | 'str' | 'env';
 
+export type SslMode = 'disable' | 'require' | 'verify-ca' | 'verify-full';
+
 export interface PostgresDBNodeConfig {
   name: string;
   host: string;
@@ -14,6 +16,13 @@ export interface PostgresDBNodeConfig {
   databaseFieldType: string;
   ssl: string;
   sslFieldType: string;
+  sslmode: string;
+  sslmodeFieldType: string;
+  databaseUrl: string;
+  databaseUrlFieldType: string;
+  useDatabaseUrl: string;
+  statementTimeout: string;
+  statementTimeoutFieldType: string;
   max: string;
   maxFieldType: string;
   min: string;
@@ -36,6 +45,12 @@ export interface PostgresNodeConfig {
   query: string;
   PostgresDBNode: string;
   throwErrors: string | boolean;
+  useNamedParams: string | boolean;
+  queryTimeout: string;
+  queryTimeoutFieldType: string;
+  mapNumeric: string | boolean;
+  mapTimestamptz: string | boolean;
+  parseJsonb: string | boolean;
 }
 
 export interface PostgresListenerNodeConfig {
@@ -61,4 +76,20 @@ export interface NodeStatus {
   fill: string;
   shape: string;
   text: string;
+}
+
+export interface StructuredError {
+  message: string;
+  code?: string;
+  detail?: string;
+  constraint?: string;
+  table?: string;
+  schema?: string;
+  column?: string;
+  severity?: string;
+  position?: string;
+  dataType?: string;
+  hint?: string;
+  where?: string;
+  routine?: string;
 }

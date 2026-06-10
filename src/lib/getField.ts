@@ -37,6 +37,9 @@ export function getField(
         return value === 'true';
       }
     }
+    case 'env': {
+      return process.env[value as string];
+    }
     case 'str':
     default: {
       return value;
