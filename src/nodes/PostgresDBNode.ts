@@ -59,14 +59,14 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
       rejectUnauthorized: false,
       ca: node.credentials.sslCa,
       key: node.credentials.sslKey,
-      cert: node.credentials.sslCert,
+      cert: node.credentials.sslCert
     };
   } else if (sslmode === 'verify-full') {
     sslConfig = {
       rejectUnauthorized: true,
       ca: node.credentials.sslCa,
       key: node.credentials.sslKey,
-      cert: node.credentials.sslCert,
+      cert: node.credentials.sslCert
     };
   }
   // sslmode === 'disable' → sslConfig stays false
@@ -84,7 +84,7 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
       password: parsed.password || getField(node, n.passwordFieldType as any, node.credentials.password) as string | undefined,
       host: parsed.host || getField(node, n.hostFieldType as any, n.host) as string,
       port: parsed.port ? parseInt(parsed.port, 10) : 5432,
-      database: parsed.database || getField(node, n.databaseFieldType as any, n.database) as string,
+      database: parsed.database || getField(node, n.databaseFieldType as any, n.database) as string
     };
   } else {
     connectionConfig = {
@@ -92,7 +92,7 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
       password: getField(node, n.passwordFieldType as any, node.credentials.password) as string | undefined,
       host: getField(node, n.hostFieldType as any, n.host) as string,
       port: getField(node, n.portFieldType as any, n.port) as number,
-      database: getField(node, n.databaseFieldType as any, n.database) as string,
+      database: getField(node, n.databaseFieldType as any, n.database) as string
     };
   }
 
@@ -103,7 +103,7 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
     max: getField(node, n.maxFieldType as any, n.max) as number,
     idleTimeoutMillis: getField(node, n.idleFieldType as any, n.idle) as number,
     connectionTimeoutMillis: getField(node, n.connectionTimeoutFieldType as any, n.connectionTimeout) as number,
-    statement_timeout: getField(node, n.statementTimeoutFieldType as any, n.statementTimeout) as number || undefined,
+    statement_timeout: getField(node, n.statementTimeoutFieldType as any, n.statementTimeout) as number || undefined
   });
 
   // --- Type parser registration (no-op stub until plan 02-03) ---
@@ -117,7 +117,7 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
     node.status({
       fill: 'red',
       shape: 'ring',
-      text: `DB: ${err.message}`,
+      text: `DB: ${err.message}`
     });
   });
 
@@ -132,7 +132,7 @@ export function PostgresDBNode(this: any, n: PostgresDBNodeConfig) {
     node.status({
       fill: nearLimit ? 'yellow' : 'green',
       shape: 'ring',
-      text: `Active: ${active}  Idle: ${idle}  Waiting: ${waiting}  Total: ${total}${nearLimit ? ' ⚠' : ''}`,
+      text: `Active: ${active}  Idle: ${idle}  Waiting: ${waiting}  Total: ${total}${nearLimit ? ' ⚠' : ''}`
     });
   }, 30000);
 
