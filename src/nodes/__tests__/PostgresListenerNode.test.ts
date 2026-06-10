@@ -54,6 +54,7 @@ describe('PostgresListenerNode', () => {
       name: 'test-listener',
       channel: 'test_channel',
       PostgresDBNode: 'config-node-id',
+      parseNotifyJson: true,
       ...overrides
     };
   }

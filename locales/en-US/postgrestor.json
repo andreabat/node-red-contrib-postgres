@@ -28,7 +28,9 @@
       "mapNumeric": "Map numeric → number",
       "mapTimestamptz": "Map timestamptz → ISO 8601",
       "parseJsonb": "Parse jsonb → object",
-      "transactionMode": "Transaction Mode"
+      "transactionMode": "Transaction Mode",
+      "parseNotifyJson": "Auto-parse JSON NOTIFY payloads",
+      "channel": "Channel"
     },
     "placeholder": {
       "name": "dbConnection",
@@ -65,7 +67,8 @@
       "mapNumeric": "Convert PostgreSQL numeric type to JavaScript number. Warning: loss of precision for very large values.",
       "mapTimestamptz": "Convert PostgreSQL timestamptz to ISO 8601 date string. Off: returns Date object.",
       "parseJsonb": "Auto-parse PostgreSQL jsonb columns to JavaScript objects. Off: returns raw jsonb string.",
-      "transactionMode": "Execute msg.payload as an array of {query, params, output} entries atomically within a single transaction (BEGIN/COMMIT/ROLLBACK). First output:true wins."
+      "transactionMode": "Execute msg.payload as an array of {query, params, output} entries atomically within a single transaction (BEGIN/COMMIT/ROLLBACK). First output:true wins.",
+      "parseNotifyJson": "Auto-parse NOTIFY payload as JSON. Falls back to raw string on parse failure. Default on."
     },
     "databaseSource": {
       "manual": "Manual",

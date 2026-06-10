@@ -12,11 +12,17 @@
     </label>
     <input type="text" id="node-input-PostgresDBNode">
   </div>
-  <div class="form-row">
-    <label for="node-input-channel">
-      <span data-i18n="postgrestor.label.channel">Channel to listen to</span>
-    </label>
-    <input type="text" id="node-input-channel" data-i18n="[placeholder]node-red:common.label.channel"> </div>
+   <div class="form-row">
+     <label for="node-input-channel">
+       <span data-i18n="postgrestor.label.channel">Channel to listen to</span>
+     </label>
+     <input type="text" id="node-input-channel" data-i18n="[placeholder]node-red:common.label.channel"> </div>
+   <div class="form-row">
+     <input type="checkbox" id="node-input-parseNotifyJson" style="display: inline-block; width: auto; vertical-align: top;">
+     <label for="node-input-parseNotifyJson">
+       <span data-i18n="postgrestor.label.parseNotifyJson">Auto-parse JSON NOTIFY payloads</span>
+     </label>
+   </div>
 </script>
 <script type="text/javascript">
   RED.nodes.registerType("PostgresListenerNode", {
@@ -35,6 +41,9 @@
       outputs: {
         value: 1
       },
+      parseNotifyJson: {
+        value: true,
+      },
 
     },
     inputs: 0,
@@ -47,7 +56,7 @@
       return this.name ? "node_label_italic" : "";
     },
     oneditprepare: function () {
-
+      $("#node-input-parseNotifyJson").prop("checked", this.parseNotifyJson !== false && this.parseNotifyJson !== 'false');
     },
     oneditsave: function () {
 

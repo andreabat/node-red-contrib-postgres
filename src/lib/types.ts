@@ -64,6 +64,7 @@ export interface PostgresListenerNodeConfig {
   name: string;
   channel: string;
   PostgresDBNode: string;
+  parseNotifyJson: string | boolean;
 }
 
 export interface PoolConfig {
