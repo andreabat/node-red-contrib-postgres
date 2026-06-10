@@ -21,34 +21,70 @@
   <div id="postgrestor-config-tabs-content" style="min-height: 170px;">
     <div id="postgrestor-config-tab-connection" style="display: none;">
       <div class="form-row">
-        <label for="node-config-input-host">
-          <i class="fa fa-server"></i>
-          <span data-i18n="postgrestor.label.host"></span>
+        <label for="node-config-input-databaseSource">
+          <i class="fa fa-link"></i>
+          <span data-i18n="postgrestor.label.databaseSource"></span>
         </label>
-        <input type="text" id="node-config-input-host" data-i18n="[placeholder]postgrestor.placeholder.host" style="width: 80%;">
-        <input type="hidden" id="node-config-input-hostFieldType">
+        <div style="display: inline-block; vertical-align: top;">
+          <input type="radio" id="postgrestor-dbsource-manual" name="databaseSource" value="manual" checked>
+          <label for="postgrestor-dbsource-manual" data-i18n="postgrestor.databaseSource.manual" style="width: auto; display: inline;"></label>
+          <input type="radio" id="postgrestor-dbsource-url" name="databaseSource" value="url" style="margin-left: 12px;">
+          <label for="postgrestor-dbsource-url" data-i18n="postgrestor.databaseSource.url" style="width: auto; display: inline;"></label>
+        </div>
+      </div>
+      <div id="postgrestor-manual-fields">
+        <div class="form-row">
+          <label for="node-config-input-host">
+            <i class="fa fa-server"></i>
+            <span data-i18n="postgrestor.label.host"></span>
+          </label>
+          <input type="text" id="node-config-input-host" data-i18n="[placeholder]postgrestor.placeholder.host" style="width: 80%;">
+          <input type="hidden" id="node-config-input-hostFieldType">
+        </div>
+        <div class="form-row">
+          <label for="node-config-input-port">
+            <i class="fa fa-plug"></i>
+            <span data-i18n="postgrestor.label.port"></span>
+          </label>
+          <input type="text" id="node-config-input-port" data-i18n="[placeholder]postgrestor.placeholder.port" style="width: 80%;">
+          <input type="hidden" id="node-config-input-portFieldType">
+        </div>
+        <div class="form-row">
+          <label for="node-config-input-database">
+            <i class="fa fa-database"></i>
+            <span data-i18n="postgrestor.label.database"></span>
+          </label>
+          <input type="text" id="node-config-input-database" data-i18n="[placeholder]postgrestor.placeholder.database" style="width: 80%;">
+          <input type="hidden" id="node-config-input-databaseFieldType">
+        </div>
+      </div>
+      <div class="form-row" id="postgrestor-databaseUrl-row" style="display: none;">
+        <label for="node-config-input-databaseUrl" data-i18n="[title]postgrestor.title.databaseUrl">
+          <i class="fa fa-link"></i>
+          <span data-i18n="postgrestor.label.databaseUrl"></span>
+        </label>
+        <input type="text" id="node-config-input-databaseUrl" data-i18n="[placeholder]postgrestor.placeholder.databaseUrl" style="width: 80%;">
+        <input type="hidden" id="node-config-input-databaseUrlFieldType">
       </div>
       <div class="form-row">
-        <label for="node-config-input-port">
-          <i class="fa fa-plug"></i>
-          <span data-i18n="postgrestor.label.port"></span>
+        <label for="node-config-input-sslmode" data-i18n="[title]postgrestor.title.sslmode">
+          <i class="fa fa-shield"></i>
+          <span data-i18n="postgrestor.label.sslmode"></span>
         </label>
-        <input type="text" id="node-config-input-port" data-i18n="[placeholder]postgrestor.placeholder.port" style="width: 80%;">
-        <input type="hidden" id="node-config-input-portFieldType">
+        <select id="node-config-input-sslmode" style="width: auto; min-width: 130px;">
+          <option value="disable" data-i18n="postgrestor.sslmode.disable"></option>
+          <option value="require" data-i18n="postgrestor.sslmode.require"></option>
+          <option value="verify-ca" data-i18n="postgrestor.sslmode.verify-ca"></option>
+          <option value="verify-full" data-i18n="postgrestor.sslmode.verify-full"></option>
+        </select>
+        <input type="hidden" id="node-config-input-sslmodeFieldType">
       </div>
-      <div class="form-row">
-        <label for="node-config-input-database">
-          <i class="fa fa-database"></i>
-          <span data-i18n="postgrestor.label.database"></span>
-        </label>
-        <input type="text" id="node-config-input-database" data-i18n="[placeholder]postgrestor.placeholder.database" style="width: 80%;">
-        <input type="hidden" id="node-config-input-databaseFieldType">
-      </div>
-      <div class="form-row">
+      <div class="form-row" id="postgrestor-ssl-deprecated-row" style="display: none;">
         <label for="node-config-input-ssl" style="width: auto; margin-right: 72px;">
-          <span data-i18n="postgrestor.label.ssl"></span>
+          <span data-i18n="postgrestor.label.sslDeprecated"></span>
         </label>
-        <input type="checkbox" id="node-config-input-ssl" style="display: inline-block; width: auto; vertical-align: top;">
+        <input type="checkbox" id="node-config-input-ssl" style="display: inline-block; width: auto; vertical-align: top;" disabled>
+        <span style="color: #999; font-size: 0.85em; margin-left: 8px;" data-i18n="postgrestor.title.sslDeprecated"></span>
         <input type="hidden" id="node-config-input-sslFieldType">
       </div>
     </div>
@@ -69,6 +105,30 @@
         </label>
         <input type="password" id="node-config-input-password" data-i18n="[placeholder]postgrestor.placeholder.password" style="width: 80%;">
 
+      </div>
+
+      <div id="postgrestor-ssl-cert-fields" style="display: none;">
+        <div class="form-row">
+          <label for="node-config-input-sslCa">
+            <i class="fa fa-certificate"></i>
+            <span data-i18n="postgrestor.label.sslCa"></span>
+          </label>
+          <textarea id="node-config-input-sslCa" data-i18n="[placeholder]postgrestor.placeholder.sslCa" style="width: 80%; height: 80px;"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="node-config-input-sslCert">
+            <i class="fa fa-file-text"></i>
+            <span data-i18n="postgrestor.label.sslCert"></span>
+          </label>
+          <textarea id="node-config-input-sslCert" data-i18n="[placeholder]postgrestor.placeholder.sslCert" style="width: 80%; height: 80px;"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="node-config-input-sslKey">
+            <i class="fa fa-key"></i>
+            <span data-i18n="postgrestor.label.sslKey"></span>
+          </label>
+          <textarea id="node-config-input-sslKey" data-i18n="[placeholder]postgrestor.placeholder.sslKey" style="width: 80%; height: 80px;"></textarea>
+        </div>
       </div>
 
     </div>
@@ -104,6 +164,14 @@
         </label>
         <input type="text" id="node-config-input-connectionTimeout" data-i18n="[placeholder]postgrestor.placeholder.connectionTimeout" style="width: 60%;">
         <input type="hidden" id="node-config-input-connectionTimeoutFieldType">
+      </div>
+      <div class="form-row">
+        <label for="node-config-input-statementTimeout" data-i18n="[title]postgrestor.title.statementTimeout" style="width: 150px;">
+          <i class="fa fa-clock-o"></i>
+          <span data-i18n="postgrestor.label.statementTimeout"></span>
+        </label>
+        <input type="text" id="node-config-input-statementTimeout" data-i18n="[placeholder]postgrestor.placeholder.statementTimeout" style="width: 60%;">
+        <input type="hidden" id="node-config-input-statementTimeoutFieldType">
       </div>
     </div>
   </div>
@@ -143,12 +211,27 @@
       databaseFieldType: {
         value: "str"
       },
+      useDatabaseUrl: {
+        value: false
+      },
+      databaseUrl: {
+        value: ""
+      },
+      databaseUrlFieldType: {
+        value: "str"
+      },
       ssl: {
         value: false,
         required: true
       },
       sslFieldType: {
         value: "bool"
+      },
+      sslmode: {
+        value: "disable"
+      },
+      sslmodeFieldType: {
+        value: "str"
       },
       max: {
         value: 10,
@@ -157,15 +240,8 @@
       maxFieldType: {
         value: "num"
       },
-      min: {
-        value: 1,
-        required: true
-      },
-      minFieldType: {
-        value: "num"
-      },
       idle: {
-        value: 1000,
+        value: 10000,
         required: true
       },
       idleFieldType: {
@@ -176,6 +252,12 @@
         required: true
       },
       connectionTimeoutFieldType: {
+        value: "num"
+      },
+      statementTimeout: {
+        value: 0
+      },
+      statementTimeoutFieldType: {
         value: "num"
       }
     },
@@ -223,6 +305,11 @@
         types: ['str', 'flow', 'global', 'env'],
         typeField: $("#node-config-input-databaseFieldType")
       });
+      $("#node-config-input-databaseUrl").typedInput({
+        default: 'str',
+        types: ['str', 'flow', 'global', 'env'],
+        typeField: $("#node-config-input-databaseUrlFieldType")
+      });
       $("#node-config-input-max").typedInput({
         default: 'num',
         types: ['num', 'flow', 'global'],
@@ -243,10 +330,59 @@
         types: ['num', 'flow', 'global'],
         typeField: $("#node-config-input-connectionTimeoutFieldType")
       });
+      $("#node-config-input-statementTimeout").typedInput({
+        default: 'num',
+        types: ['num', 'flow', 'global'],
+        typeField: $("#node-config-input-statementTimeoutFieldType")
+      });
+
+      // Database Source radio toggle
+      const toggleFields = function () {
+        if ($("#postgrestor-dbsource-url").is(":checked")) {
+          $("#postgrestor-manual-fields").hide();
+          $("#postgrestor-databaseUrl-row").show();
+        } else {
+          $("#postgrestor-manual-fields").show();
+          $("#postgrestor-databaseUrl-row").hide();
+        }
+      };
+      $("input[name='databaseSource']").on('change', toggleFields);
+
+      // sslmode progressive disclosure
+      const sslmodeToggleCerts = function () {
+        const mode = $("#node-config-input-sslmode").val();
+        if (mode === 'verify-ca' || mode === 'verify-full') {
+          $("#postgrestor-ssl-cert-fields").show();
+        } else {
+          $("#postgrestor-ssl-cert-fields").hide();
+        }
+      };
+      $("#node-config-input-sslmode").on('change', sslmodeToggleCerts);
+
+      // SSL migration: show deprecated checkbox if legacy ssl was true
+      if (this.ssl === true || this.ssl === 'true') {
+        if (!this.sslmode || this.sslmode === 'disable') {
+          $("#node-config-input-sslmode").val('require');
+        }
+        $("#postgrestor-ssl-deprecated-row").show();
+      }
+
+      // Set initial radio button state from useDatabaseUrl
+      if (this.useDatabaseUrl === true || this.useDatabaseUrl === 'true') {
+        $("#postgrestor-dbsource-url").prop('checked', true);
+        $("#postgrestor-dbsource-manual").prop('checked', false);
+      }
+
+      // Trigger visibility on initial load
+      toggleFields();
+      sslmodeToggleCerts();
     },
      credentials: {
       user: { type: 'text' },
       password: { type: 'password' },
+      sslCa: { type: 'password' },
+      sslCert: { type: 'password' },
+      sslKey: { type: 'password' },
     },
 
   });
