@@ -36,6 +36,7 @@ describe('PostgresDBNode', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
 
     // Build a mock RED runtime matching what node-red provides
     redRuntime = {
@@ -96,6 +97,7 @@ describe('PostgresDBNode', () => {
           global: { get: () => undefined }
         }),
         debug: jest.fn(),
+        on: jest.fn(),
         credentials: { user: undefined, password: undefined }
       };
 
@@ -150,7 +152,9 @@ describe('PostgresDBNode', () => {
           global: { get: () => undefined }
         }),
         debug: jest.fn(),
-        credentials: { user: 'u', password: 'p' }
+        warn: jest.fn(),
+        on: jest.fn(),
+        credentials: { user: 'admin', password: 'secret' }
       };
 
       const boundFn = PostgresDBNode.bind(context, config);
@@ -203,6 +207,8 @@ describe('PostgresDBNode', () => {
         }),
         debug: jest.fn(),
         warn: jest.fn(),
+        on: jest.fn(),
+        status: jest.fn(),
         credentials: { user: 'admin', password: 'secret' }
       };
 
@@ -223,6 +229,7 @@ describe('PostgresDBNode', () => {
       expect(poolConfig.ssl).toBe(false);
       expect(poolConfig.user).toBe('admin');
       expect(poolConfig.password).toBe('secret');
+      // min removed from pool constructor (pg v8 ignores it)
     });
   });
 
@@ -267,6 +274,8 @@ describe('PostgresDBNode', () => {
       }),
       debug: jest.fn(),
       warn: jest.fn(),
+      on: jest.fn(),
+      status: jest.fn(),
       credentials: {
         user: 'admin',
         password: 'secret',
@@ -406,6 +415,8 @@ describe('PostgresDBNode', () => {
         }),
         debug: jest.fn(),
         warn: jest.fn(),
+        on: jest.fn(),
+        status: jest.fn(),
         credentials: { user: undefined, password: undefined }
       };
 
@@ -463,6 +474,8 @@ describe('PostgresDBNode', () => {
         }),
         debug: jest.fn(),
         warn: jest.fn(),
+        on: jest.fn(),
+        status: jest.fn(),
         credentials: { user: 'admin', password: 'secret' }
       };
 
@@ -698,6 +711,8 @@ describe('PostgresDBNode', () => {
 
   describe('close handler', () => {
     it('should clear node status on close', () => {
+      jest.useFakeTimers();
+
       const statusSpy = jest.fn();
       const context: any = {
         context: () => ({
@@ -739,6 +754,8 @@ describe('PostgresDBNode', () => {
       closeHandler();
 
       expect(statusSpy).toHaveBeenCalledWith({});
+
+      jest.useRealTimers();
     });
   });
 });

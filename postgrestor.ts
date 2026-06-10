@@ -16,7 +16,10 @@ export = function (RED: Red) {
   RED.nodes.registerType('PostgresDBNode', PostgresDBNode, {
     credentials: {
       user: { type: 'text' },
-      password: { type: 'password' }
+      password: { type: 'password' },
+      sslCa: { type: 'password' },
+      sslCert: { type: 'password' },
+      sslKey: { type: 'password' }
     }
   });
   RED.nodes.registerType('PostgresNode', PostgresNode);
