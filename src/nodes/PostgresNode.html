@@ -25,6 +25,12 @@
     </label>
   </div>
   <div class="form-row">
+    <input type="checkbox" id="node-input-transactionMode" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-input-transactionMode">
+      <span data-i18n="postgrestor.label.transactionMode">Transaction Mode</span>
+    </label>
+  </div>
+  <div class="form-row">
     <label for="node-input-queryTimeout">
       <i class="fa fa-clock-o"></i>
       <span data-i18n="postgrestor.label.queryTimeout">Query Timeout (ms)</span>
@@ -101,6 +107,9 @@
       },
       parseJsonb: {
         value: true,
+      },
+      transactionMode: {
+        value: false,
       }
     },
     inputs: 1,
@@ -137,6 +146,7 @@
       $("#node-input-mapNumeric").prop("checked", this.mapNumeric === true || this.mapNumeric === 'true');
       $("#node-input-mapTimestamptz").prop("checked", this.mapTimestamptz === true || this.mapTimestamptz === 'true');
       $("#node-input-parseJsonb").prop("checked", this.parseJsonb !== false && this.parseJsonb !== 'false');
+      $("#node-input-transactionMode").prop("checked", this.transactionMode === true || this.transactionMode === 'true');
 
       // Initialize queryTimeout typedInput
       if (this.queryTimeoutFieldType === undefined || this.queryTimeoutFieldType === '') {

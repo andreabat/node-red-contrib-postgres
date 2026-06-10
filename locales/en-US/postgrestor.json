@@ -27,7 +27,8 @@
       "queryTimeout": "Query Timeout (ms)",
       "mapNumeric": "Map numeric → number",
       "mapTimestamptz": "Map timestamptz → ISO 8601",
-      "parseJsonb": "Parse jsonb → object"
+      "parseJsonb": "Parse jsonb → object",
+      "transactionMode": "Transaction Mode"
     },
     "placeholder": {
       "name": "dbConnection",
@@ -63,7 +64,8 @@
       "queryTimeout": "Per-node query timeout in milliseconds. 0 = no timeout. Overrides the pool statement_timeout for this node.",
       "mapNumeric": "Convert PostgreSQL numeric type to JavaScript number. Warning: loss of precision for very large values.",
       "mapTimestamptz": "Convert PostgreSQL timestamptz to ISO 8601 date string. Off: returns Date object.",
-      "parseJsonb": "Auto-parse PostgreSQL jsonb columns to JavaScript objects. Off: returns raw jsonb string."
+      "parseJsonb": "Auto-parse PostgreSQL jsonb columns to JavaScript objects. Off: returns raw jsonb string.",
+      "transactionMode": "Execute msg.payload as an array of {query, params, output} entries atomically within a single transaction (BEGIN/COMMIT/ROLLBACK). First output:true wins."
     },
     "databaseSource": {
       "manual": "Manual",

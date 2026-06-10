@@ -33,6 +33,8 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
       ? bindNamedParams(query, msg.params)
       : (msg.params || []);
 
+    const transactionMode = config.transactionMode === true || config.transactionMode === 'true';
+
     const asyncQuery = async () => {
       let client = null;
       const timeoutMs = parseInt(String(config.queryTimeout || 0), 10);
@@ -48,6 +50,26 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
           } catch (setErr: any) {
             node.warn(`Could not set statement_timeout: ${setErr.message}`);
           }
+        }
+
+        // Transaction mode: execute array of {query, params, output} entries atomically
+        if (transactionMode && Array.isArray(msg.payload)) {
+          await client.query('BEGIN');
+          let outputResult: any = null;
+          for (const entry of msg.payload) {
+            const entryQuery = mustache.render(entry.query, { msg });
+            const entryParams = useNamedParams && entry.params && typeof entry.params === 'object' && !Array.isArray(entry.params)
+              ? bindNamedParams(entryQuery, entry.params)
+              : (Array.isArray(entry.params) ? entry.params : []);
+            const result = await client.query(entryQuery, entryParams);
+            if (entry.output && !outputResult) {
+              outputResult = result;
+            }
+          }
+          await client.query('COMMIT');
+          msg.payload = outputResult ? outputResult.rows : [];
+          node.status({ fill: 'green', shape: 'ring', text: 'Transaction committed' });
+          return;
         }
 
         // Step C: Prepared statement name and type mapping config (REL-02, REL-03)
@@ -72,6 +94,14 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
       } catch (err: any) {
         // Step D: Structured error handling (QUERY-02)
         const structuredError = formatError(err);
+
+        // Transaction rollback: attempt ROLLBACK on the client before error propagation
+        if (transactionMode && Array.isArray(msg.payload)) {
+          try { await client.query('ROLLBACK'); } catch (rollbackErr: any) {
+            node.warn(`ROLLBACK failed: ${rollbackErr.message}`);
+          }
+          msg.payload = undefined;
+        }
 
         // Detect query timeout (code 57014) and format message with timeout value
         if (structuredError.code === '57014') {
