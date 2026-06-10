@@ -91,6 +91,7 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
         // Cursor path via DECLARE/FETCH (no retry, D-10)
         if (cursorMode && query.trim().toUpperCase().startsWith('SELECT')) {
           const cursorName = 'gsd_' + Math.random().toString(36).substring(2, 10);
+          await client.query('BEGIN');
           await client.query(`DECLARE ${cursorName} CURSOR FOR ${query}`);
           let batchIndex = 0;
           let totalRows = 0;
@@ -105,6 +106,7 @@ export function PostgresNode(this: any, config: PostgresNodeConfig) {
             });
             batchIndex++;
           }
+          await client.query('COMMIT');
           node.send({
             payload: [],
             complete: true,

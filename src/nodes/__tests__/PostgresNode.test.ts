@@ -1311,12 +1311,14 @@ describe('PostgresNode', () => {
     });
 
     it('should use DECLARE/FETCH and emit sequential batches', async () => {
-      // Mock the cursor queries: DECLARE, FETCH (2 batches), last FETCH (empty)
+      // Mock the cursor queries: BEGIN, DECLARE, FETCH (2 batches), last FETCH (empty), COMMIT
       mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({}) // DECLARE
         .mockResolvedValueOnce({ command: 'FETCH', rows: [{ id: 1 }, { id: 2 }], rowCount: 2 }) // FETCH batch 0
         .mockResolvedValueOnce({ command: 'FETCH', rows: [{ id: 3 }], rowCount: 1 }) // FETCH batch 1
-        .mockResolvedValueOnce({ command: 'FETCH', rows: [], rowCount: 0 }); // FETCH final (empty)
+        .mockResolvedValueOnce({ command: 'FETCH', rows: [], rowCount: 0 }) // FETCH final (empty)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const config = buildConfig({ cursorMode: true });
       const context = buildContext();
