@@ -91,9 +91,16 @@ describe('getField', () => {
   });
 
   describe('env', () => {
-    it('should fall to default and return value as-is', () => {
-      const result = getField(node, 'env', 'MY_ENV_VAR');
-      expect(result).toBe('MY_ENV_VAR');
+    it('should look up value from process.env', () => {
+      process.env.TEST_GET_FIELD = 'from-env';
+      const result = getField(node, 'env', 'TEST_GET_FIELD');
+      expect(result).toBe('from-env');
+      delete process.env.TEST_GET_FIELD;
+    });
+
+    it('should return undefined for unset env variable', () => {
+      const result = getField(node, 'env', 'NONEXISTENT_ENV_VAR_ZZZ');
+      expect(result).toBeUndefined();
     });
   });
 });
