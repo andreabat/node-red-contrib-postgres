@@ -39,7 +39,10 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
           text: `listening on ${config.channel}`
         });
 
-        listenerClient!.on('notification', (msg: pg.Notification) => {
+        // pg PoolClient may not proxy 'notification' from the underlying
+        // Client. Access _client directly to guarantee delivery.
+        const eventSource = (listenerClient as any)._client || listenerClient;
+        eventSource.on('notification', (msg: pg.Notification) => {
           let payload: any = msg.payload;
           if (parseNotifyJson) {
             try { payload = JSON.parse(msg.payload || ''); } catch { /* fall through to raw string */ }
