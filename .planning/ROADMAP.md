@@ -6,7 +6,7 @@ Reviving a functional but unmaintained Node-RED PostgreSQL contrib node into a p
 
 ## Phases
 
-- [ ] **Phase 1: Foundation & Modernization** — TypeScript migration, tooling upgrade, bug fixes, and codebase cleanup
+- [x] **Phase 1: Foundation & Modernization** — TypeScript migration, tooling upgrade, bug fixes, and codebase cleanup
 - [ ] **Phase 2: Production Database Core** — Configurable pools, SSL, named parameters, structured errors, query timeout, SQL editor, type mapping, prepared statements
 - [ ] **Phase 3: Transactions, Real-time & Streaming** — Atomic multi-step transactions, LISTEN/NOTIFY with auto-reconnect, cursor streaming, COPY support, and retry with exponential backoff
 
@@ -54,7 +54,17 @@ Plans:
   4. Developer can set a per-node query timeout that cleanly cancels queries; the SQL editor provides CodeMirror syntax highlighting in the node config panel
   5. Query results auto-map PostgreSQL types: `numeric` → number, `timestamptz` → ISO string, `jsonb` optional parse (per-node toggle); high-frequency queries can use named prepared statements with automatic cache management
 
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
+
+**Wave 1**
+- [ ] 02-01-PLAN.md — PostgresDBNode config: sslmode dropdown with progressive cert disclosure (D-01/D-02/D-03), DATABASE_URL connection (POOL-04), pool health badge (POOL-02), enhanced pool config UI (POOL-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 02-02-PLAN.md — PostgresNode query execution: named parameter binding from msg.params object (QUERY-01), structured error objects with code/detail/constraint/table (QUERY-02), per-node query timeout via SET statement_timeout (QUERY-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 02-03-PLAN.md — PostgresNode editor + performance: ACE editor with SQL syntax highlighting/line numbers/autocomplete (QUERY-04), auto type mapping NUMERIC→number, TIMESTAMPTZ→ISO, JSONB→object (REL-03), transparent prepared statements with MD5 hash naming (REL-02, D-04/D-05/D-06)
+
 **UI hint**: yes
 
 ### Phase 3: Transactions, Real-time & Streaming
@@ -77,6 +87,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Modernization | 1/3 | In Progress|  |
-| 2. Production Database Core | 0/TBD | Not started | - |
+| 1. Foundation & Modernization | 3/3 | Complete | 2026-06-10 |
+| 2. Production Database Core | 0/3 | Planned | - |
 | 3. Transactions, Real-time & Streaming | 0/TBD | Not started | - |
