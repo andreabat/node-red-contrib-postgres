@@ -38,6 +38,12 @@ export interface PostgresNodeConfig {
   throwErrors: string | boolean;
 }
 
+export interface PostgresListenerNodeConfig {
+  name: string;
+  channel: string;
+  PostgresDBNode: string;
+}
+
 export interface PoolConfig {
   user: string;
   password: string;
