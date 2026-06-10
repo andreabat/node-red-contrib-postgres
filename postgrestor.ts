@@ -1,4 +1,5 @@
 import { PostgresDBNode } from './src/nodes/PostgresDBNode';
+import { PostgresNode } from './src/nodes/PostgresNode';
 import { setRED } from './src/lib/red';
 
 interface Red {
@@ -17,4 +18,5 @@ export = function (RED: Red) {
       password: { type: 'password' }
     }
   });
+  RED.nodes.registerType('PostgresNode', PostgresNode);
 };

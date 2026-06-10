@@ -35,7 +35,7 @@ export interface PostgresNodeConfig {
   topic: string;
   query: string;
   PostgresDBNode: string;
-  throwErrors: string;
+  throwErrors: string | boolean;
 }
 
 export interface PoolConfig {
