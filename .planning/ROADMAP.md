@@ -81,7 +81,16 @@ Plans:
   4. Developer can enable cursor mode to stream large result sets in configurable row batches — each batch emitted as a sequential message with a final `complete: true` signal — and use COPY for high-performance CSV import/export, with proper client release on node close
   5. Transient PostgreSQL errors (deadlock 40P01, serialization failure 40001, connection resets, etc.) automatically retry with configurable exponential backoff + jitter, up to a configurable max retry count
 
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
+
+**Wave 1**
+- [ ] 03-01-PLAN.md — Transaction mode on PostgresNode: array-of-queries atomic execution with BEGIN/COMMIT/ROLLBACK (TXN-01, TXN-02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 03-02-PLAN.md — Listener auto-reconnect with jittered exponential backoff, pg-format channel sanitization, NOTIFY JSON auto-parse toggle (LISTEN-01, LISTEN-02, LISTEN-03)
+
+**Wave 3** *(blocked on Waves 1 & 2 completion)*
+- [ ] 03-03-PLAN.md — Cursor streaming with batched emission, COPY CSV import/export via pipeline(), retry on transient errors with isTransientError detection (STREAM-01, STREAM-02, REL-01)
 
 ## Progress
 
