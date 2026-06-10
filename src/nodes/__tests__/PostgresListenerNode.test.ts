@@ -84,11 +84,12 @@ describe('PostgresListenerNode', () => {
         }
       }
     };
-    (context as any)._triggerClientEnd = function () {
+    // Helper to trigger client error event (simulates connection drop)
+    (context as any)._triggerClientError = function () {
       const onCalls = (mockClient.on as jest.Mock).mock.calls;
       for (const call of onCalls) {
-        if (call[0] === 'end') {
-          call[1](new Error('connection ended'));
+        if (call[0] === 'error') {
+          call[1](new Error('connection error'));
         }
       }
     };
@@ -211,8 +212,8 @@ describe('PostgresListenerNode', () => {
       mockClient.query.mockClear();
       mockClient.query.mockResolvedValue({});
 
-      // Trigger connection end
-      context._triggerClientEnd();
+      // Trigger connection error
+      context._triggerClientError();
       await flushPromises();
 
       // Should show yellow reconnecting status

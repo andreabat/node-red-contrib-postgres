@@ -24,7 +24,7 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
 
   const parseNotifyJson = config.parseNotifyJson === undefined || config.parseNotifyJson === true || config.parseNotifyJson === 'true';
 
-  async function listenLoop(): Promise<void> {
+  async function         listenLoop(): Promise<void> {
     let attempt = 0;
 
     while (!closed) {
@@ -47,9 +47,13 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
           node.send({ channel: msg.channel, payload, _original: msg.payload });
         });
 
+        // Block until connection drops. PoolClient proxies the underlying
+        // Client's 'error' event, which fires on TCP reset, timeout, or
+        // server restart. We do NOT listen for 'end' — PoolClient emits
+        // 'end' during normal pool operations (release/internal cleanup),
+        // which would prematurely kill the listenLoop.
         await new Promise<void>((_, reject) => {
           listenerClient!.on('error', reject);
-          listenerClient!.on('end', reject);
         });
       } catch (err: any) {
         if (closed) break;
