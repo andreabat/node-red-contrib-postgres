@@ -109,7 +109,7 @@ npm run lint     # ESLint 9.x
 
 ## 📜 License
 
-Apache-2.0. Original work by Andrea Batazzi. Revived with ❤️ and TypeScript.
+GNU AGPL-3.0. Original work by Andrea Batazzi. Revived with ❤️ and TypeScript.
 
 ---
 

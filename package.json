@@ -21,7 +21,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "Apache",
+  "license": "AGPL-3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/andreabat/node-red-contrib-postgrestor"
