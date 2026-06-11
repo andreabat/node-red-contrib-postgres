@@ -88,7 +88,7 @@ if $DO_PG; then
       rm -rf /tmp/dvdrental_extract/*
       tar xf "${DVD_DUMP}" -C /tmp/dvdrental_extract
       docker cp /tmp/dvdrental_extract/. "${PG_CONTAINER}:/tmp/dump/"
-      docker exec "${PG_CONTAINER}" pg_restore -U "${PG_USER}" -d "${PG_DB}" -c --if-exists /tmp/dump/ 2>&1 | tail -5
+      docker exec "${PG_CONTAINER}" pg_restore -U "${PG_USER}" -d "${PG_DB}" -c --if-exists --no-owner --no-privileges /tmp/dump/ 2>&1 | tail -5
       mkdir -p "${TEST_DIR}"
       touch "${LOADED_MARKER}"
       echo "  -> dvdrental caricato."
