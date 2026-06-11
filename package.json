@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "mustache": "^4.2.0",
-    "pg": "^8.16.2",
+    "pg": "^8.21.0",
     "pg-copy-streams": "^7.0.0",
     "pg-format": "^1.0.4"
   },
