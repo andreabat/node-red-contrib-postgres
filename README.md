@@ -109,7 +109,7 @@ npm run lint     # ESLint 9.x
 
 ## 📜 License
 
-GNU AGPL-3.0. Original work by Andrea Batazzi. Revived with ❤️ and TypeScript.
+GNU AGPL-3.0. Originally by [doing-things-with-node-red](https://github.com/doing-things-with-node-red/node-red-contrib-postgrestor), forked and maintained by Andrea Batazzi. Revived with ❤️ and TypeScript.
 
 ---
 
