@@ -35,6 +35,15 @@
     "version": ">=3.0.0",
     "nodes": {
       "postgres": "dist/postgrestor.js"
+    },
+    "examples": {
+      "01-basic-query": "examples/01-basic-query.json",
+      "02-named-parameters": "examples/02-named-parameters.json",
+      "03-transaction": "examples/03-transaction.json",
+      "04-cursor-streaming": "examples/04-cursor-streaming.json",
+      "05-copy-export": "examples/05-copy-export.json",
+      "06-listener-notify": "examples/06-listener-notify.json",
+      "07-retry-transient": "examples/07-retry-transient.json"
     }
   },
   "devDependencies": {
