@@ -43,11 +43,6 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
         listenerClient = new pg.Client(buildClientConfig());
         await listenerClient.connect();
 
-        await listenerClient.query(`LISTEN ${safeChannel}`);
-        attempt = 0;
-
-        node.status({ fill: 'green', shape: 'ring', text: `listening on ${config.channel}` });
-
         const notificationHandler = (msg: pg.Notification) => {
           node.log(`NOTIFY received on channel '${msg.channel}': ${msg.payload}`);
           let payload: any = msg.payload;
@@ -57,7 +52,13 @@ export function PostgresListenerNode(this: any, config: PostgresListenerNodeConf
           node.send({ channel: msg.channel, payload, _original: msg.payload });
         };
 
+        // Register handler before LISTEN so we don't miss rapid-fire events
         listenerClient.on('notification', notificationHandler);
+
+        await listenerClient.query(`LISTEN ${safeChannel}`);
+        attempt = 0;
+
+        node.status({ fill: 'green', shape: 'ring', text: `listening on ${config.channel}` });
 
         await new Promise<void>((_, reject) => {
           listenerClient!.on('error', reject);
