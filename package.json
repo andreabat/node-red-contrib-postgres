@@ -24,7 +24,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/andreabat/node-red-contrib-postgrestor"
+    "url": "https://github.com/andreabat/node-red-contrib-postgres"
   },
   "keywords": [
     "node-red",
@@ -61,5 +61,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/andreabat/node-red-contrib-postgres/issues"
+  },
+  "homepage": "https://github.com/andreabat/node-red-contrib-postgres#readme"
 }
